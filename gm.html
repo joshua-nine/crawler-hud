@@ -353,6 +353,11 @@ body.player #cloudBanner,body.player #localUp{display:none!important}
 @media (prefers-reduced-motion:reduce){.fxbanner,.fxnum,.fxflash,.fxbanner i{animation-duration:.01s}.fxbanner{animation:none}}
 
 #liveErr:empty{display:none}
+.ddb-body>*,.ddb-main,.ddb-pane,.ddb-skillcol{min-width:0}
+.ddb-tabs em{font-style:normal}.ddb-tabs .ts{display:none}
+.hotgrid{grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr))}.gearg{grid-template-columns:repeat(auto-fill,minmax(min(170px,100%),1fr))}
+@media (max-width:900px){.ddb-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;overflow:visible}.ddb-tabs button{justify-content:center;padding:8px 4px;font-size:12px}.ddb-tabs .tl{display:none}.ddb-tabs .ts{display:inline}
+ .hotgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* player app */
 .pl-top{display:flex;align-items:center;gap:10px;padding:12px 0 6px;flex-wrap:wrap}
 .pl-brand{font-family:var(--f-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi)}
@@ -375,7 +380,15 @@ body.player header.top,body.player #newFloorForm,body.player #manageFloorsBox,bo
 @media (max-width:760px){
  body.player .wrap{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
  body.player .ddb-tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(10,16,32,.97);border-top:1px solid var(--line-2);border-bottom:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));backdrop-filter:blur(6px)}
- body.player .ddb-tabs button{flex-direction:column;gap:0;font-size:10px;padding:6px 8px;border-bottom:0;border-top:2px solid transparent;min-width:62px}
+ @media (max-width:700px){.tabs{flex-wrap:wrap;overflow:visible;gap:2px 0}.tabs button{padding:8px 10px;font-size:12.5px}.pl-chips{flex-wrap:wrap;overflow:visible;flex-basis:100%;order:3}}
+@media (max-width:700px){table.adv{width:100%;table-layout:fixed}table.adv th,table.adv td{padding:6px 2px!important;font-size:12px;text-align:center}table.adv th:first-child,table.adv td:first-child{width:34%;text-align:left}}
+table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:auto!important;min-width:0!important}
+table.stack thead{display:none}table.stack tr{border:1px solid var(--line-2);border-radius:10px;padding:6px 10px;margin-bottom:8px}
+table.stack td{border:0!important;padding:4px 0!important;text-align:left!important}
+table.stack td[data-label]{display:flex!important;align-items:center;gap:10px}table.stack td[data-label]>*{flex:1;min-width:0}table.stack td[data-label]::before{content:attr(data-label);flex:0 0 34%;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}table.stack tr.hl{background:rgba(216,178,90,.08)}table.stack tr.hl td{background:none!important}
+table.stack td input,table.stack td select,table.stack td textarea{width:100%!important;box-sizing:border-box}
+body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
+ body.player .ddb-tabs button{flex-direction:column;gap:0;font-size:9.5px;letter-spacing:.02em;padding:6px 0;border-bottom:0;border-top:2px solid transparent;min-width:0}
  body.player .ddb-tabs button span{font-size:18px}body.player .ddb-tabs button.on{border-top-color:var(--gold)}
  body.player .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
  body.player .rollbox{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
@@ -2178,7 +2191,7 @@ function progressPanel(){const L=S.progLog;if(!L)return "";
 
 /* ===================== APP-STYLE CHARACTER SHEET (layout modeled on the D&D Beyond app: header, ability boxes, combat strip, section tabs) ===================== */
 const STAT_NAME={STR:"Strength",INT:"Intelligence",CON:"Constitution",DEX:"Dexterity",CHA:"Charisma"};
-const DDB_TABS=[["actions","Actions","⚔"],["skills","Skills","◎"],["spells","Spells","✦"],["inv","Inventory","▤"],["feat","Features","★"],["story","Story","❡"],["notes","Notes","✎"],["extras","Extras","◇"]];
+const DDB_TABS=[["actions","Actions","⚔","Actions"],["skills","Skills","◎","Skills"],["spells","Spells","✦","Spells"],["inv","Inventory","▤","Items"],["feat","Features","★","Traits"],["story","Story","❡","Story"],["notes","Notes","✎","Notes"],["extras","Extras","◇","More"]];
 function skillStat(s){const m=String(s.stat||"").trim().slice(0,3).toUpperCase();return STATS.includes(m)?m:""}
 function skillBonus(c,s,k){const st=skillStat(s);return (+s.rank||0)+(st?k.mods[st]:0)}
 /* dice: "d20+3", "1d8+2+1d4", "2d6" */
@@ -2255,7 +2268,7 @@ function sheetPlay(c){const k=sheetCalc(c),t=S.ddbTab||"actions";
   const body=t==="skills"?`<div class="only-m">${ddbSkills(c,k)}</div><div class="only-d">${ddbActions(c,k)}</div>`:pane(c,k);
   return `<section class="panel ddb" aria-label="${esc(c.name)} character sheet">${ddbHeader(c,k)}${ddbStats(c,k)}${ddbVitals(c,k)}
    <div class="ddb-body"><aside class="ddb-skillcol">${ddbSkills(c,k)}</aside>
-    <div class="ddb-main"><nav class="ddb-tabs" aria-label="Sheet sections">${DDB_TABS.map(([key,l,ic])=>`<button class="${key===t?"on":""} ${key==="skills"?"only-m":""}" data-act="ddbTab" data-k="${key}" aria-current="${key===t}"><span aria-hidden="true">${ic}</span>${l}</button>`).join("")}</nav>
+    <div class="ddb-main"><nav class="ddb-tabs" aria-label="Sheet sections">${DDB_TABS.map(([key,l,ic,sh])=>`<button class="${key===t?"on":""} ${key==="skills"?"only-m":""}" data-act="ddbTab" data-k="${key}" aria-current="${key===t}" aria-label="${l}"><span aria-hidden="true">${ic}</span><em class="tl">${l}</em><em class="ts" aria-hidden="true">${sh}</em></button>`).join("")}</nav>
      <div class="ddb-pane">${body}</div></div></div></section>`}
 /* ---- player app: phone-first, only the character ---- */
 function vPlayer(){if(S.wiz)return vWizard();
@@ -2608,6 +2621,11 @@ function liveFx(prev,next){const d=diffC(prev,next),kp=sheetCalc(prev),kn=sheetC
   const P=S.live?.pendingSay&&S.live.pendingSay.until>Date.now()?S.live.pendingSay:null;if(P)S.live.pendingSay=null;
   queuePop({mode:"changes",title:P?.title||(lv?`Level ${next.level}!`:fl?`Welcome to Floor ${next.floor}`:"Your character changed"),say:P?.say||"",rows:[{id:next.id,name:next.name,diff:d,notes:[]}]})}
 
+/* phones: wide tables become stacked cards */
+function stackTables(){if(innerWidth>700){document.querySelectorAll('table.stack').forEach(t=>t.classList.remove('stack'));return}
+  document.querySelectorAll('.tbl').forEach(d=>{const t=d.querySelector('table');if(!t||t.classList.contains('stack')||t.classList.contains('adv'))return;if(t.scrollWidth<=d.clientWidth+2)return;
+    const hs=[...t.querySelectorAll('thead th')].map(h=>h.textContent.trim());t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>{if(hs[i])c.dataset.label=hs[i]}));t.classList.add('stack')})}
+{let q=0;const run=()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;stackTables()})};new MutationObserver(run).observe(document.body,{childList:true,subtree:true});addEventListener('resize',()=>{document.querySelectorAll('table.stack').forEach(t=>t.classList.remove('stack'));run()});run()}
 const LIBRARY={home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
 /* ===================== GENERATOR TABLES (original) ===================== */
 const R=a=>a[Math.floor(Math.random()*a.length)];
