@@ -1095,7 +1095,7 @@ function keepFocus(fn){const a=document.activeElement,p=a?.dataset?.p,sel=a&&"se
 document.addEventListener("click",async e=>{
   const tabB=e.target.closest("[data-tab]");if(tabB){S.tab=tabB.dataset.tab;S.confirm=null;renderShell();renderMain();return}
   const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,f=F();
-  if(a==="liveGoogle"){liveGoogle();return}if(a==="liveDevice"){liveDeviceOnly();return}if(a==="liveNewRoom"){lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString();return}if(a==="cloudRetry"){location.reload();return}
+  if(a==="liveGoogle"){liveGoogle();return}if(a==="liveLink"){liveLinkGoogle();return}if(a==="liveDevice"){liveDeviceOnly();return}if(a==="liveNewRoom"){lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString();return}if(a==="cloudRetry"){location.reload();return}
   if(el.tagName==="BUTTON"&&el.closest(".head")&&a!=="toggleCard")e.stopPropagation();
   switch(a){
    case "newFloor":S.newFloor=!S.newFloor;renderNewFloor();if(S.newFloor)$("#nf_num")?.focus();return;
@@ -2524,7 +2524,7 @@ async function liveGmBoot(){let fb;try{fb=await fbLoad()}catch(e){liveGate("erro
     if(meta&&meta.gmUid!==u.uid){liveGate("notyours",room);return null}
     if(!meta)await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
   else{room=roomCode();await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
-  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",online:false};liveWatchConn();
+  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();
   const base=c=>c==="floors"?livePath("gm/floors"):livePath("chars");
   return {collection:c=>({onSnapshot(cb,err){return D.onValue(D.ref(db,base(c)),snap=>{const v=snap.val()||{};
         cb({docs:Object.entries(v).filter(([,d])=>c==="floors"||d&&d.sheet).map(([id,d])=>({id,exists:true,data:()=>c==="floors"?d:{...d.sheet,id,__owner:!!d.ownerUid}}))})},e=>err&&err(e))},
@@ -2545,11 +2545,14 @@ function liveAuthMsg(e){const c=String(e?.code||e?.message||e||"unknown");S.live
    :/network/.test(c)?"No connection to Google. Check your internet and try again.":"Sign-in didn't finish ("+c+")."}
 async function liveGoogle(){const fb=S.fb,p=new fb.Au.GoogleAuthProvider();try{await fb.Au.signInWithPopup(fb.auth,p);S.liveSignIn&&S.liveSignIn()}
   catch(e){liveGate("signin");const m=$("#liveErr");if(m)m.textContent=liveAuthMsg(e)}}
+async function liveLinkGoogle(){const fb=S.fb,u=fb.auth.currentUser;if(!u)return;const p=new fb.Au.GoogleAuthProvider();
+  try{const r=await fb.Au.linkWithPopup(u,p);S.live.email=r.user.email||"";S.live.anon=false;lsSet("dcc.gmDevice",false);renderMain();toast("Google linked. Open gm.html on any device and sign in with Google.")}
+  catch(e){const c=String(e?.code||e);toast(/credential-already-in-use|email-already-in-use/.test(c)?"That Google account is already used by another room. Pick a different Google account.":liveAuthMsg(e))}}
 async function liveDeviceOnly(){const fb=S.fb;try{await fb.Au.signInAnonymously(fb.auth);S.liveSignIn&&S.liveSignIn()}catch(e){liveGate("signin");const m=$("#liveErr");if(m)m.textContent=liveAuthMsg(e)}}
 function livePushEvent(ev){if(S.live?.role!=="gm"||!S.fb)return;const {D,db}=S.fb;D.push(D.ref(db,livePath("events")),fbClean({...ev,ts:Date.now()})).catch(()=>toast("Couldn't reach players"))}
 function playerLink(id){const u=new URL(location.href);u.search="";u.hash="";u.pathname=u.pathname.replace(/[^/]*$/,"index.html");u.searchParams.set("room",S.live.room);if(id)u.searchParams.set("char",id);return u.toString()}
 function livePanel(){if(S.live?.role!=="gm")return "";const cs=Object.values(S.sheets).filter(x=>x.kind==="crawler");
-  return `<div class="livebox"><div class="row" style="gap:8px;align-items:center"><b>Live room</b><span class="mono">${esc(S.live.room)}</span>${livePill()}<span class="dim" style="font-size:12px">${esc(S.live.email)}</span></div>
+  return `<div class="livebox"><div class="row" style="gap:8px;align-items:center"><b>Live room</b><span class="mono">${esc(S.live.room)}</span>${livePill()}<span class="dim" style="font-size:12px">${esc(S.live.email||(S.live.anon?"This device only":""))}</span>${S.live.anon?`<button class="btn sm gold" data-act="liveLink">🔗 Link my Google account</button>`:""}</div>
    <p class="dim" style="font-size:13px;margin:6px 0">Send each player their own link once. Their phone updates by itself when you change their character.</p>
    <div class="row" style="gap:6px">${cs.map(c=>`<button class="btn sm" data-act="liveCopy" data-id="${c.id}">🔗 ${esc(c.name)}${c.__owner?" ✓":""}</button>`).join("")}<button class="btn sm ghost" data-act="liveCopy" data-id="">🔗 New player link</button></div>
    <div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" data-act="announceOpen">📣 Message the party</button><label class="row" style="gap:6px;font-size:13px"><input type="checkbox" id="autoSpeak" ${soundOn()?"checked":""}> Read System Messages aloud on this device</label></div></div>`}
