@@ -1009,6 +1009,7 @@ function lichPanel(f){
      <label class="f" style="flex:0 1 140px"><span>Show</span><select id="libKind"><option value="">Mobs & Bosses</option><option value="Mob" ${S.libKind==="Mob"?"selected":""}>Mobs only</option><option value="Boss" ${S.libKind==="Boss"?"selected":""}>Bosses only</option></select></label>
      <label class="f" style="flex:1 1 200px"><span>Family</span><select id="libFam"><option value="">All (${fams.length})</option>${fams.map(x=>`<option ${S.libFam===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label></div>`})():""}
    ${(()=>{const shown=libFilter(lib,set),lim=S.libLim||30;return `<p class="dim" style="font-size:12px;margin:0 0 8px">${shown.length} match${shown.length===1?"":"es"}</p><div class="grid g3" id="libGrid">${shown.slice(0,lim).map(([L,i])=>`<div class="card" style="padding:12px;display:grid;gap:6px;align-content:start">
+     ${upArt(L)?`<img src="${upArt(L)}" alt="" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:8px;background:var(--bg)">`:""}
      <div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="font-size:15px">${esc(L.name)}</h3><span class="dim mono" style="font-size:11px;white-space:nowrap">${L.kind==="Mob"?`Mob · ${L.lv}`:esc(L.tier||"")}${L.page?" · p."+L.page:""}</span></div>
      ${L.book?`<span class="dim" style="font-size:11px">${esc(L.book)}</span>`:""}
      <span class="eyebrow">${esc(L.origin)}${set==="lich"?" lich":""}${L.cr!=null?` · 5e CR ${L.cr<1?"½":L.cr}`:""}</span><p style="margin:0;font-size:13.5px" class="muted">${esc(L.concept)}</p>
@@ -1326,7 +1327,7 @@ document.addEventListener("click",async e=>{
    case "lootAddAll":{const L=lootState();const n=L.res.length;let w="";L.res.forEach(it=>w=lootAdd(f,it));L.res=[];toast(`${n} items added${w?" to "+w:""}`);break}
    case "libSet":S.libSet=el.dataset.k;S.libQ="";S.libFam="";S.libKind="";S.libLim=30;renderMain();return;
    case "libMore":S.libLim=(S.libLim||30)+30;renderMain();return;
-   case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,S.lichTier||L.tier||"City",+f.number||3);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
+   case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,S.lichTier||L.tier||"City",+f.number||3);if(!m.img&&upArt(L))m.img=upArt(L);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
    case "genType":S.gen.type=el.dataset.k;S.gen.res=null;S.gen.locks={};S.gen.full=null;S.gen.err="";renderMain();return;
    case "genRoll":{const g=S.gen,F=+f.number||3,fresh=rollAll(g.type,F,genFlavor(f));
      if(g.res&&g.resType===g.type){Object.keys(fresh).forEach(k=>{if(g.locks[k])fresh[k]=g.res[k]});if(g.locks.type&&!g.locks.stages&&g.type==="quest")fresh.stages=rollField("quest","stages",{F,flavor:genFlavor(f),cur:fresh})}
@@ -2941,13 +2942,18 @@ function barrowBanner(f){if(!BARROW_PACK.match(f)||(f.packs||[]).includes(BARROW
 
 
 /* ===================== YOUR UPLOADS: converted monster pack ===================== */
-const UPLOADS=[];const UPLOAD_ITEMS=[];
+const UPLOADS=[];const UPLOAD_ITEMS=[];const UPLOAD_IMGS={};
 const PACK_EMBED=/*PACK*/null/*/PACK*/;
-function applyPack(p){if(!p||p.kind!=="floor-builder-pack")return 0;UPLOADS.length=0;(p.monsters||[]).forEach(m=>UPLOADS.push(m));
+function applyPack(p){if(!p||p.kind!=="floor-builder-pack")return 0;UPLOADS.length=0;(p.monsters||[]).forEach(m=>UPLOADS.push(m));Object.assign(UPLOAD_IMGS,p.images||{});setTimeout(backfillArt,0);
   let si=ITEMS.src.indexOf("Your uploads (converted)");if(si<0){ITEMS.src.push("Your uploads (converted)");si=ITEMS.src.length-1}
   ITEMS.items=ITEMS.items.filter(x=>x.src!==si);(p.items||[]).forEach(x=>ITEMS.items.push({n:x.n,s:x.s,b:x.b,src:si,p:0,fx:x.fx+(x.from?` (From the ${x.from}.)`:"")}));
   S.packLoaded=true;return UPLOADS.length}
 if(PACK_EMBED)applyPack(PACK_EMBED);
+const upArt=L=>L&&L.imgKey?UPLOAD_IMGS[L.imgKey]||"":"";
+function backfillArt(){if(S.player||!UPLOADS.length)return;const by={};UPLOADS.forEach(L=>{if(L.imgKey&&UPLOAD_IMGS[L.imgKey])by[L.name.toLowerCase()]=UPLOAD_IMGS[L.imgKey]});let n=0;
+  Object.values(S.floors||{}).forEach(f=>{let ch=false;(f.mobs||[]).forEach(m=>{const a=!m.img&&by[String(m.name||"").toLowerCase()];if(a){m.img=a;ch=true;n++}});if(ch)scheduleSave(f.id)});
+  Object.values(S.sheets||{}).forEach(c=>{if(c.kind==="creature"&&!c.portrait){const a=by[String(c.name||"").toLowerCase()];if(a){c.portrait=a;saveSheet(c.id);n++}}});
+  if(n){toast(`Added art to ${n} monster${n>1?"s":""} already on your floors`);if(S.tab==="mobs"||S.tab==="sheets")renderMain()}}
 async function loadPackFile(file){let p;try{p=JSON.parse(await file.text())}catch(_){toast("That file isn't a monster pack");return}
   const n=applyPack(p);if(!n){toast("That file isn't a monster pack");return}
   if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;try{await D.set(D.ref(db,livePath("gm/pack")),fbClean(p));toast(`${n} monsters loaded and saved to your room`)}catch(_){toast(`${n} monsters loaded on this device only`)}}
