@@ -2545,7 +2545,13 @@ async function liveGoogle(){const fb=S.fb,p=new fb.Au.GoogleAuthProvider();try{a
   catch(e){liveGate("signin");const m=$("#liveErr");if(m)m.textContent=liveAuthMsg(e)}}
 async function liveLinkGoogle(){const fb=S.fb,u=fb.auth.currentUser;if(!u)return;const p=new fb.Au.GoogleAuthProvider();
   try{const r=await fb.Au.linkWithPopup(u,p);S.live.email=r.user.email||"";S.live.anon=false;lsSet("dcc.gmDevice",false);renderMain();toast("Google linked. Open gm.html on any device and sign in with Google.")}
-  catch(e){const c=String(e?.code||e);toast(/credential-already-in-use|email-already-in-use/.test(c)?"That Google account is already used by another room. Pick a different Google account.":liveAuthMsg(e))}}
+  catch(e){const c=String(e?.code||e);
+    if(/credential-already-in-use/.test(c)){const cred=fb.Au.GoogleAuthProvider.credentialFromError?.(e);
+      if(cred){try{toast("Moving your room to that Google account…");const app2=fb.A.initializeApp(LIVE.cfg,"move"+Date.now()),a2=fb.Au.getAuth(app2);const r2=await fb.Au.signInWithCredential(a2,cred);
+        await fb.D.update(fb.D.ref(fb.db,livePath("meta")),{gmUid:r2.user.uid});await fb.Au.signInWithCredential(fb.auth,cred);fb.Au.signOut(a2).catch(()=>{});
+        S.live.uid=r2.user.uid;S.live.anon=false;S.live.email=r2.user.email||"";lsSet("dcc.gmDevice",false);renderMain();toast("Done! Your room now belongs to your Google account.");return}
+       catch(e2){toast(liveAuthMsg(e2));return}}}
+    toast(liveAuthMsg(e))}}
 async function liveDeviceOnly(){const fb=S.fb;try{await fb.Au.signInAnonymously(fb.auth);S.liveSignIn&&S.liveSignIn()}catch(e){liveGate("signin");const m=$("#liveErr");if(m)m.textContent=liveAuthMsg(e)}}
 function livePushEvent(ev){if(S.live?.role!=="gm"||!S.fb)return;const {D,db}=S.fb;D.push(D.ref(db,livePath("events")),fbClean({...ev,ts:Date.now()})).catch(()=>toast("Couldn't reach players"))}
 function playerLink(id){const u=new URL(location.href);u.search="";u.hash="";u.pathname=u.pathname.replace(/[^/]*$/,"index.html");u.searchParams.set("room",S.live.room);if(id)u.searchParams.set("char",id);return u.toString()}
