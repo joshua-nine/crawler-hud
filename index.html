@@ -386,6 +386,7 @@ body[data-mood] .pop-card header small{color:var(--mood)}body[data-mood] .pop-ca
 .cbt-av{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:var(--gold-ink);font-weight:700;overflow:hidden}.cbt-av img{width:100%;height:100%;object-fit:cover}
 .cbt-ev{display:flex;gap:6px;flex:1 1 200px}.cbt-ev select{flex:1;min-width:0}.cbt-ev input{width:90px}
 .cbchk{display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:14px;cursor:pointer}.cbchk input{width:20px!important;height:20px;flex:none;margin:1px 0 0}
+.packbanner{border-color:var(--gold);background:linear-gradient(180deg,rgba(216,178,90,.10),transparent)}.packlist{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 .btn.big{padding:12px 22px;font-size:16px}
 .cblog{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}.cblog header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.cblog header .dim{flex:1;font-size:12px;min-width:0;overflow-wrap:anywhere}
 .cblr{padding:6px 0;border-top:1px solid var(--line)}.cblr .neg{color:#ff7a66;font-weight:700}.cblr .pos{color:#7dffb2;font-weight:600}
@@ -682,7 +683,8 @@ function vOverview(f){
   const prepped=[...f.neighborhoods,...f.quests].filter(x=>x.status!=="planned").length;
   const spice=[["lootbox","Saferoom time to open loot boxes"],["friendly","Friendly crawlers or NPCs to hang with"],["recap","A recap episode moment"],["interview","An interview show (p.285)"],["popularity","Popularity / Top Ten beat (p.279)"],["sponsor","Sponsor or patron hook (p.284)"]];
   const prep=[["stairs","I know where the stairwells are and how crawlers find them"],["nbs","I've picked 4–6 Neighborhoods and read their intros"],["interact","I know how neighboring Neighborhoods interact (rivalries, environment)"],["liminal","I know what fills the liminal spaces between them"],["quest","At least one Quest can intrude if the clock runs short"],["personal","Each crawler has one hook tied to a Trauma, Loose End or Regret"]];
-  return `
+  return `${barrowBanner(f)}
+  ${f.lore?`<section class="panel"><header><h2>Floor lore</h2><span class="muted" style="font-size:13px">Read it, steal it, change it</span></header><textarea data-p="lore" rows="12" aria-label="Floor lore" style="width:100%">${esc(f.lore)}</textarea></section>`:""}
   <section class="panel"><header><h2>Floor map</h2><span class="muted" style="font-size:13px">Tap the map to see it full size</span></header>${imgPick("floor","map",f.map,"map","Floor map")}</section>
   <section class="panel"><header><h2>Floor ${esc(f.number)} rules at a glance</h2><span class="muted" style="font-size:13px">Add the Floor Number wherever a stat says +F</span></header>${rulesReadout(f)}</section>
   <div class="cols">
@@ -1141,7 +1143,7 @@ function keepFocus(fn){const a=document.activeElement,p=a?.dataset?.p,sel=a&&"se
 
 document.addEventListener("click",async e=>{
   const tabB=e.target.closest("[data-tab]");if(tabB){S.tab=tabB.dataset.tab;S.confirm=null;renderShell();renderMain();return}
-  const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,f=F();if(/^(cb|mood)/.test(a)){combatAct(a,el);return}
+  const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,f=F();if(/^(cb|mood)/.test(a)){combatAct(a,el);return}if(a==="packApply"&&f){applyBarrowPack(f);scheduleSave();renderShell();renderMain();toast("Barrow Command added. Check Mob Forge, Neighborhoods and Quests.");return}if(a==="packHide"&&f){(S.packHidden=S.packHidden||{})[f.id]=true;renderMain();return}
   if(a==="liveSignOut"){(async()=>{try{await S.fb.Au.signOut(S.fb.auth)}catch(_){}lsSet("dcc.gmDevice",false);lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString()})();return}
   if(a==="liveGoogle"){liveGoogle();return}if(a==="liveLink"){liveLinkGoogle();return}if(a==="liveDevice"){liveDeviceOnly();return}if(a==="liveNewRoom"){lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString();return}if(a==="cloudRetry"){location.reload();return}
   if(el.tagName==="BUTTON"&&el.closest(".head")&&a!=="toggleCard")e.stopPropagation();
@@ -1191,7 +1193,7 @@ document.addEventListener("click",async e=>{
    case "sheetExport":{const c=S.sheets[S.sheetSel];await saveBytes(`${String(c.name).replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-sheet.json`,JSON.stringify(c,null,2),"application/json");return}
    case "sheetPdf":{const c=S.sheets[S.sheetSel];el.disabled=true;try{await fillOfficialPdf(c)}catch(e){toast("Couldn't fill the PDF")}el.disabled=false;return}
    case "hbToggle":{const c=S.sheets[S.sheetSel];const who=el.dataset.who;const a=who?c[who].hbLost:c.hbLost,i=+el.dataset.i;a[i]=!a[i];saveSheet(c.id);if(document.querySelector(".ddb")){renderMain();return}el.classList.toggle("lost",a[i]);updateSheetDerived();return}
-   case "hbHeal":{const c=S.sheets[S.sheetSel];let n=+el.dataset.k;const sl=Math.max(1,+c.hbSlots||10);for(let i=sl-1;i>=0&&n>0;i--)if(c.hbLost[i]){c.hbLost[i]=false;n--}
+   case "hbHeal":{const c=S.sheets[S.sheetSel];let n=+el.dataset.k;const sl=Math.max(1,+c.hbSlots||10);{const dr=+((String(c.debuffs||"").match(/Drained ×(\d+)/)||[])[1]||0),lost=c.hbLost.slice(0,sl).filter(Boolean).length;if(dr&&lost-dr<n){n=Math.max(0,lost-dr);toast(n?`Healed ${n}. ${dr} slot${dr>1?"s are":" is"} Drained until a Long Rest`:`Those slots are Drained. Only a Long Rest clears them`)}}for(let i=sl-1;i>=0&&n>0;i--)if(c.hbLost[i]){c.hbLost[i]=false;n--}
      for(let i=0;i<sl&&n>0;i++)if(c.hbLost[i]){c.hbLost[i]=false;n--}saveSheet(c.id);renderMain();return}
    case "voiceKind":{const V=S.voice||(S.voice={});V.kind=el.dataset.k;V.out="";V.subj="";renderMain();return}
    case "voiceRoll":{const V=S.voice||(S.voice={kind:"mob"});const d=AIV[V.kind];const pool=d.need==="quest"?f.quests:f.mobs;const sid=$("#voiceSubj")?.value||V.subj;V.subj=sid;const subj=d.need?pool.find(x=>x.id===sid)||null:null;
@@ -2772,7 +2774,7 @@ function vCombat(f){const C=cbState(),srcs=cbSources(f),traps=cbTraps(f),crawler
   if(C.kind==="mob"){
     how=srcs.length?`<div class="grid g2"><label class="f"><span>Monster</span><select data-cb="src">${Object.entries(grp).map(([g,l])=>`<optgroup label="${esc(g)}">${l.map(s=>`<option value="${s.key}" ${s.key===C.src?"selected":""}>${s.boss?"👑 ":""}${esc(s.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>
       <label class="f"><span>Attack</span><select data-cb="atk">${(src?.atks||[]).map((a,i)=>`<option value="${i}" ${String(i)===String(C.atk)?"selected":""}>${esc(a.name)} · ${esc(a.dmg)}</option>`).join("")}</select></label></div>
-      ${atk?`<div class="cbsum"><b>${esc(atk.dmg)}</b>${atk.type?` <span class="dtype">${esc(atk.type)}</span>`:""} · Evade Difficulty <b>${atk.dc}</b>${atk.aoe?" · <span class=\"dtype\">Area</span> (Evade halves)":""}${atk.fx?`<div class="dim" style="font-size:12px;margin-top:4px">${esc(atk.fx)}</div>`:""}</div>`:""}
+      ${atk?`<div class="cbsum"><b>${esc(atk.dmg)}</b>${atk.type?` <span class="dtype">${esc(atk.type)}</span>`:""} · Evade Difficulty <b>${atk.dc}</b>${atk.aoe?" · <span class=\"dtype\">Area</span> (Evade halves)":""}${atk.fx?`<div class="dim" style="font-size:12px;margin-top:4px">${esc(atk.fx)}</div>`:""}${/life drain/i.test(atk.fx)?`<div style="font-size:12px;margin-top:4px;color:#ff9fd8">🩸 Life Drain: lost slots become Drained stacks automatically</div>`:""}</div>`:""}
       <label class="cbchk"><input type="checkbox" data-cb="aoe" ${C.aoe?"checked":""}> Treat as an Area attack (a successful Evade halves the damage)</label>`
      :`<p class="muted">No monsters yet. Add some in the <b>Mob Forge</b> or make a creature sheet.</p>`}
   else{const tr=traps.find(t=>t.key===C.trap);
@@ -2812,7 +2814,7 @@ function cbInput(t,commit){const C=cbState(),key=t.dataset.cb;let v=t.type==="ch
   if(commit&&(t.tagName==="SELECT"||t.type==="checkbox"))keepFocus(renderMain)}
 function cbResolve(){const C=cbState(),f=F();let A;
   if(C.kind==="mob"){const src=cbSources(f).find(s=>s.key===C.src),a=src?.atks[+C.atk]||src?.atks[0];if(!a){toast("Pick a monster and an attack");return}
-    const aoe=C.aoe||a.aoe;A={title:`${src.name}: ${a.name}`,who:src.name,what:a.name,expr:a.dmg,type:a.type,check:"evade",dc:a.dc,onSave:aoe?"half":"none",aoe,voice:src.boss?"boss":"monster",major:true}}
+    const aoe=C.aoe||a.aoe;A={title:`${src.name}: ${a.name}`,who:src.name,what:a.name,expr:a.dmg,type:a.type,check:"evade",dc:a.dc,onSave:aoe?"half":"none",aoe,voice:src.boss?"boss":"monster",major:true,drain:/life drain/i.test(a.fx)}}
   else{const tr=cbTraps(f).find(x=>x.key===C.trap);const nm=tr?.name||C.trapName||"Trap";A={title:`Trap: ${nm}`,who:nm,what:"",expr:C.dmgExpr||`${f.number}d6`,type:C.dmgType,check:C.check,dc:num(C.dc)||10+(+f.number||0),onSave:C.onSave,voice:"system",major:false}}
   const ids=Object.entries(C.tg).filter(([id,T])=>T.on&&S.sheets[id]).map(([id])=>id);if(!ids.length){toast("Tap at least one crawler");return}
   let total,rollTxt;if(C.dmgMode==="manual"){if(C.dmgVal===""){toast("Enter the damage total");return}total=num(C.dmgVal);rollTxt=`${total} damage`}else{const r=rollExpr(A.expr);total=r.total;rollTxt=`${A.expr}: ${r.parts.join(" ").replace(/^\+/,"")} = ${total}`}
@@ -2828,8 +2830,9 @@ function cbResolve(){const C=cbState(),f=F();let A;
     L.undo[id]={hbLost:c.hbLost.slice(),debuffs:c.debuffs||""};
     const R=dmg>0?applyDamage(c,dmg,A.type):{final:0,slots:0,steps:[],dying:false,left:k.left};
     if(R.slots>0&&C.debuff.trim()&&!String(c.debuffs||"").includes(C.debuff.trim()))c.debuffs=[c.debuffs,C.debuff.trim()].filter(Boolean).join("; ");
+    if(R.slots>0&&A.drain){const cur=+((String(c.debuffs||"").match(/Drained ×(\d+)/)||[])[1]||0),nx=cur+R.slots,tag=`Drained ×${nx} (${nx} HB slot${nx>1?"s":""} can't be healed until a Long Rest)`;c.debuffs=cur?String(c.debuffs).replace(/Drained ×\d+ \([^)]*\)/,tag):[c.debuffs,tag].filter(Boolean).join("; ");R.drained=nx}
     saveSheet(id);L.rows.push({name:c.name,slots:R.slots,dying:R.dying,outcome,steps:R.steps});
-    const say=`${A.who}${A.what?` uses ${A.what}`:""}${C.kind==="trap"?" springs":""}! ${outcome?outcome+". ":""}${R.steps.length?R.steps.join(", ")+". ":"No damage. "}${R.slots?`You lose ${R.slots} Health Bar slot${R.slots>1?"s":""}.`:"You keep all your Health."}${R.slots&&C.debuff.trim()?` You gain the ${C.debuff.trim()} Debuff.`:""}${R.dying?" You are DYING. Get healed to 10% or you die.":""}`;
+    const say=`${A.who}${A.what?` uses ${A.what}`:""}${C.kind==="trap"?" springs":""}! ${outcome?outcome+". ":""}${R.steps.length?R.steps.join(", ")+". ":"No damage. "}${R.slots?`You lose ${R.slots} Health Bar slot${R.slots>1?"s":""}.`:"You keep all your Health."}${R.slots&&C.debuff.trim()?` You gain the ${C.debuff.trim()} Debuff.`:""}${R.drained?` Life Drain: you have ${R.drained} Drained stack${R.drained>1?"s":""}. Those slots can't be healed until a Long Rest.`:""}${R.dying?" You are DYING. Get healed to 10% or you die.":""}`;
     livePushEvent({type:"hit",title:A.title,text:say,voice:A.voice,targets:[id],slots:R.slots,dying:R.dying})});
   C.log.unshift(L);C.log=C.log.slice(0,12);renderMain();
   const hurt=L.rows.filter(r=>r.slots).length;toast(hurt?`${hurt} crawler${hurt>1?"s":""} hurt${S.live?.role==="gm"?" · sent to their phones":""}`:"Nobody lost Health")}
@@ -2844,7 +2847,91 @@ function combatAct(a,el){switch(a){
   case "moodRoll":{const r=1+Math.floor(Math.random()*6),k=Object.keys(MOODS).find(x=>MOODS[x].n===r);setMood(k);S.pop=null;renderPop();return}
   case "moodInfo":{const M=MOODS[S.mood];if(M)toast(`${M.emoji} ${M.line}`);return}}}
 
-const LIBRARY={home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
+
+/* ===================== BARROW COMMAND: wights, draugr, life drain, blight ===================== */
+const BARROW_RULES={
+ orders:"Field Officer (Orders): In Step 1, when Mobs announce, the Officer gives ONE Order to every Thrall within 60 ft that can hear it. SHIELD WALL: Thralls touching another Thrall gain +F DR until the next round. PIN THEM: every Thrall attacks the same crawler, who rolls Evade with Disadvantage. HAMSTRING: Thrall hits also cut the target's Move by 10 ft until Clean Up. FALL BACK: Thralls withdraw toward the barrow; anyone who follows ends their move on Blighted ground.",
+ chain:"Chain of Command: A Thrall with no Order is Mindless. It attacks the nearest crawler and its attacks are Disadvantaged (book rule for Mobs: Difficulty −5 and the crawler gets a free Evade). If the Officer drops to 0% HB, is silenced, or can't be heard, every Thrall goes Mindless for the rest of the fight.",
+ sentient:"Sentient Commander: The Officer is not mindless. It retreats at 50% HB if the fight is going badly, parleys if its barrow hoard is threatened, and remembers. A tactic that beat it once raises the Difficulty of that same tactic by +5 the next time.",
+ drain:"Life Drain: When a crawler loses at least one HB slot to a Life Drain attack, they gain the Stackable Drained Debuff, one stack per slot lost. Each stack locks one HB slot: Spells, potions, mending and Short Rests can't refill it. A Long Rest outside Blighted ground clears every stack; inside it clears only one. The drainer heals 1 HB slot per stack it inflicts. A crawler with 10 stacks dies and rises as a Thrall at the next midnight.",
+ blight:"Barrow Blight (agricultural warfare): The Officer doesn't fight for ground, it fights for food. On Blighted ground: mending (1 HB slot per hour) doesn't work; food and drink found or bought here is spoiled, so a Short Rest heals 2 slots instead of 5 and restores no Mana; every 8 hours there, make a Con Stat Check vs 10 + F or gain Fatigued. BLIGHT CLOCK (4 segments): each in-game day, or each Blight raid the crawlers fail to stop, one more quarter is Blighted. At 4/4 the Neighborhood saferoom serves nothing but ash and the local NPCs flee or turn. Destroy the Blight Standard to stop the spread; burn Thralls so they stay down; return the barrow's grave-goods to end it for good."};
+const BARROW_LORE=`BARROW LORE (Norse draugr & barrow-wights, adapted for the dungeon)
+• Draugr: In the Icelandic sagas, some dead don't rest. The draugr (also aptrganga, "again-walker") rises from its grave mound, heavy as an ox, its skin gone corpse-blue (hel-blár) or deathly pale. The haugbúi, the "mound-dweller", never leaves; it sits in its barrow and guards the treasure it was buried with.
+• What they do: Saga draugr crush people, ride the roofs of farmhouses at night, slip into dreams, and above all ruin farms. In Grettis saga the shepherd Glámr comes back and kills the livestock until no one will stay on the farm, then curses the hero who wrestles him down.
+• How you stop one: Cut off the head, burn the body, and scatter or bury the ashes away from people. Folk practice tried to keep the dead from coming home at all: iron or open scissors laid on the corpse, the coffin carried out through a hole in the wall so the dead couldn't find the door again.
+• Barrow-wight: "Wight" is Old English wiht, simply "a being". Modern fantasy made the barrow-wight an evil spirit haunting old burial mounds, and tabletop games made the wight a thinking undead that drains life and leads lesser dead. That is our Field Officer: draugr strength, wight cunning.
+• Dungeon spin: The Borant Corporation licensed a "Norse Heritage" season pack years ago and canceled it halfway. Its barrows, Thralls and one very stubborn Field Officer were left running on old orders. The Officer still thinks it's Season 1. It wants its grave-goods back, its fields fed with the living, and an army big enough to march home.`;
+const BARROW_LIB=[
+ {name:"Wight Field Officer",origin:"Barrow-wight commander",kind:"",tier:"Neighborhood",role:"face",size:4,type:"Undead (Wight)",move:"30+S",drAdj:1,source:"Barrow Command pack",
+  concept:"A sentient barrow-wight in rusted grave-iron who leads mindless draugr like a drill sergeant. It fights for food and land, not glory: salt the fields, starve the saferoom, then march.",
+  attacks:[["Grave-Iron Sword","STR",10,"Slashing","5ft",0,1,"Life Drain (see trait)."],["Barrow Breath","INT",8,"Necrotic","15ft cone",1,1,"Life Drain. Ground in the cone becomes Blighted."],["Officer's Command","CHA",6,"Psychic","60ft",0,0,"No damage if it gives an Order instead (free, once per round)."]],
+  traits:[["Field Officer (Orders)",BARROW_RULES.orders],["Chain of Command",BARROW_RULES.chain],["Sentient Commander",BARROW_RULES.sentient],["Life Drain",BARROW_RULES.drain],["Barrow Blight",BARROW_RULES.blight],["Rally the Fallen","Once per combat: every Mob that died this fight within 60 ft rises as a Thrall at 50% HB in Clean Up."]],
+  clues:["Kill or silence it first: without Orders its Thralls go Mindless.","Grave-iron hates running water and fire.","It will bargain for its stolen grave-goods."]},
+ {name:"Draugr Thrall",origin:"Mindless draugr",kind:"Mob",lv:"mid",role:"brute",size:4,type:"Undead (Draugr)",move:"20+S",drAdj:1,source:"Barrow Command pack",
+  concept:"Corpse-blue, ox-heavy and dumb as a post. Dangerous only in formation, which is exactly why the Officer drills them.",
+  attacks:[["Grave Grip","STR",8,"Bludgeoning","5ft",0,1,"On a hit, the target is Grabbed until it wins a Str check vs the Thrall's attack Difficulty."]],
+  traits:[["Follows Orders","Acts on the Officer's Order each round; with no Order it is Mindless (attacks Disadvantaged)."],["Swell","Once per fight, the first time it loses an HB slot it grows one size bigger and adds one damage die."],["Stays Down When Burned","Thralls killed by Fire damage can't be raised by Rally the Fallen."]],
+  clues:["Burn them or they get back up.","They can't hear Orders through running water."]},
+ {name:"Risen Livestock",origin:"Blighted farm animals",kind:"Mob",lv:"low",role:"brute",size:5,type:"Undead (Beast)",move:"40+S",drAdj:0,source:"Barrow Command pack",
+  concept:"Prize hogs, show bulls and one terrible goat, drained and sent back out as shock troops. Where they fall, the ground goes bad.",
+  attacks:[["Trample","STR",8,"Bludgeoning","5ft",1,0,"Area: everything in its path."],["Gore","STR",6,"Piercing","5ft",0,0,""]],
+  traits:[["Blight Carrier","When it dies, its space and every adjacent space become Blighted ground."],["Stampede","Three or more charging together get +10 Move and count as one Area attack."]],
+  clues:["Lure them across running water and the herd scatters."]},
+ {name:"Barrow Haunt",origin:"Dream-riding draugr spirit",kind:"Mob",lv:"high",role:"skirm",size:3,type:"Undead (Spirit)",move:"30+S, fly, through walls",drAdj:-1,source:"Barrow Command pack",
+  concept:"The part of a draugr that rides rooftops at night and climbs into your dreams. It drains you while you sleep.",
+  attacks:[["Grave Touch","INT",8,"Necrotic","5ft",0,1,"Life Drain."]],
+  traits:[["Dream-Rider","If it spends a full hour near sleeping crawlers, their Long Rest only counts as a Short Rest."],["Life Drain",BARROW_RULES.drain]],
+  clues:["Iron laid on a sleeper's chest keeps it out of their dreams."]}];
+const BARROW_PACK={id:"barrow-command-1",title:"Barrow Command update",
+ match:f=>f.neighborhoods.some(n=>/^(Gravy Commons|Rot Gate|Heavensworth)$/i.test(n.name))||/Undercroft/i.test(f.name),
+ summary:f=>{const out=["Adds the Barrow Command creatures (Wight Field Officer, Draugr Thralls, Risen Livestock, Barrow Haunt) to this floor's Mob Forge","Adds the Norse draugr & barrow-wight lore to this floor"];
+  const has=n=>f.neighborhoods.some(x=>new RegExp("^"+n+"$","i").test(x.name));
+  if(has("Gravy Commons"))out.push("Gravy Commons: the undead retirees become Draugr Thralls drilled by Field Officer Hrafn Haugsson; new barrow trap and story arc");
+  if(has("Rot Gate"))out.push("Rot Gate: agricultural warfare. Blighted barns, Risen Livestock, the Blight Clock, a Blight Standard to destroy, and two new traps");
+  if(f.quests.some(q=>/Unholy Inheritance/i.test(q.name)))out.push("The Unholy Inheritance: the quarry is the Field Officer; its puppet is this Neighborhood's Boss");
+  if(f.quests.some(q=>/Bitter Grudge/i.test(q.name)))out.push("The Bitter Grudge: the guard captain's dead squad now marches as Thralls; the target is the Blight Standard");
+  if(has("Heavensworth"))out.push("Heavensworth: a mound-dweller under the alpine pastures, a Barrow Haunt, and a barrow-door trap");
+  out.push("Every Mob Boss in these Neighborhoods gets a 'Sentient Commander' tactics note");return out}};
+function barrowMob(name,F,tier){const L=BARROW_LIB.find(x=>x.name===name);return lichBoss(L,tier||L.tier,F)}
+function applyBarrowPack(f){if((f.packs||[]).includes(BARROW_PACK.id))return;const F=+f.number||1,add=s=>String(s||"").trim(),join=(a,b)=>add(a)?add(a)+"\n\n"+b:b;
+  const off=barrowMob("Wight Field Officer",F),thr=barrowMob("Draugr Thrall",F),cow=barrowMob("Risen Livestock",F),hau=barrowMob("Barrow Haunt",F);
+  const nb=n=>f.neighborhoods.find(x=>new RegExp("^"+n+"$","i").test(x.name));const gc=nb("Gravy Commons"),rg=nb("Rot Gate"),hv=nb("Heavensworth");
+  if(gc||rg||/Undercroft/i.test(f.name)){off.name="Field Officer Hrafn Haugsson";off.announce="Field Officer Hrafn Haugsson. A barrow-wight who still thinks it's Season 1. It drills the dead, salts the fields, and wants its grave-goods back.";}
+  [off,thr,cow,hau].forEach(m=>f.mobs.push(m));
+  f.lore=join(f.lore,BARROW_LORE);
+  const trap=(n,detect,effect)=>({name:n,detect,effect});
+  const fill=(arr,txt)=>{arr=arr||[];const i=arr.findIndex(x=>!add(x));if(i>=0)arr[i]=txt;else arr.push(txt);return arr};
+  const dedupe=(arr,news)=>{const seen=new Set();let k=0;return (arr||[]).map(x=>{const t=add(x);if(t&&!seen.has(t)){seen.add(t);return x}return news[k++]||x})};
+  if(gc){gc.summary=join(gc.summary,"BARROW COMMAND: The undead retirees are Draugr Thralls. Field Officer Hrafn Haugsson drills them every night in the strip-mall parking lot, marching in formation past the closed stores. Each store front is a barrow entrance.");
+    gc.mobs=[...new Set([...(gc.mobs||[]),off.id,thr.id])];
+    gc.environment=join(gc.environment,"Grave-mounds under the parking lot. Shopping carts full of grave-goods. At midnight the PA plays a marching drum.");
+    gc.traps=[...(gc.traps||[]),trap("Barrow door behind a store's back room","Something's Off",`${F}d6 Necrotic as the mound exhales, then 1d4 Draugr Thralls step out. Iron in hand: Advantage on the Evade.`)];
+    gc.storyArcs=fill(gc.storyArcs,"The Officer's muster: the retirees used to just shamble. Now they march. Each night of the floor, Hrafn adds a squad. By day 5 it marches on the nearest saferoom. Stop it by cutting the chain of command (kill or silence Hrafn) or by stealing back the grave-goods it keeps in the Library quarter.");
+    gc.bossNotes=join(gc.bossNotes,"Puppet: this Boss takes orders from Field Officer Hrafn Haugsson. If Hrafn falls first, the Boss fights alone and its Mobs go Mindless (attacks Disadvantaged).")}
+  if(rg){rg.summary=join(rg.summary,"AGRICULTURAL WARFARE: The county fair is the Officer's breadbasket and its weapon. Its Thralls salt the show pens, poison the feed and raise the prize animals as Risen Livestock. Use the Barrow Blight rules: Blighted quarters stop mending, spoil food (Short Rest heals 2 slots, no Mana) and force a Con check vs 10 + F every 8 hours or Fatigued.");
+    rg.mobs=[...new Set([...(rg.mobs||[]),cow.id,thr.id])];
+    rg.environment=join(rg.environment,"Black water in the troughs. Salt crusts on the hay. A grave-iron banner, the Blight Standard, hangs over the show barn: destroy it and the Blight stops spreading.");
+    rg.traps=[...(rg.traps||[]),trap("Blighted feed silo","Something's Off",`${F}d6 Poison as it bursts. Everyone in the cloud gains a Drained stack (Life Drain rules) on a failed Evade.`),trap("Barrow under the show ring","Totally Hidden",`${F}d6 Bludgeoning as the ring collapses into a mound; 1d6 Risen Livestock stampede out next round.`)];
+    rg.storyArcs=fill(rg.storyArcs,"BLIGHT CLOCK 0/4: each in-game day, or each Blight raid the crawlers fail to stop, one more quarter (Market, Shrine, Gardens, Library) goes Blighted. At 4/4 the Neighborhood saferoom serves only ash and Zara Ortolan's 'incurable Debuff' turns out to be Drained stacks from the Officer.");
+    rg.grinding=dedupe(rg.grinding,["A Blight raid: Thralls torch a quarter's food stores (advance the Blight Clock unless stopped)","A herd of Risen Livestock stampedes through camp"]);
+    rg.bossNotes=join(rg.bossNotes,"Supply chain: this Boss trades Rot Gate's harvest to the Field Officer for protection. Burn the deal (or the barns) and the Officer comes in person.")}
+  const pb=gc&&f.mobs.find(m=>m.id===gc.boss),puppet=pb?`the ${pb.name} in Gravy Commons`:"a local Boss";
+  f.quests.forEach(q=>{if(/Unholy Inheritance/i.test(q.name)){q.summary=join(q.summary,`The quarry is Field Officer Hrafn Haugsson. The 'Elite running everything through a puppet' is Hrafn; its puppet is ${puppet}. Trail: drained livestock carcasses leading from Rot Gate. Weakness learned the hard way: its Thralls can't hear Orders across running water.`);q.boss=off.id;q.mobs=[...new Set([...(q.mobs||[]),thr.id])]}
+    if(/Bitter Grudge/i.test(q.name)){q.summary=join(q.summary,"The desperate guard captain's grudge: Hrafn raised the captain's dead squad as Thralls and marches them past the captain's post every night. Draugr in the sagas are driven by grudges; so is the captain. The operation to sabotage is the Blight Standard over Rot Gate's show barn.");q.mobs=[...new Set([...(q.mobs||[]),thr.id])]}});
+  if(hv){hv.summary=join(hv.summary,"BARROW: Under the alpine pastures above the village sits a mound-dweller (haugbúi), an old draugr that never leaves its barrow and the treasure inside it. The drunk Grulke's 'he's still there' is about the mound, not the prison. Its Barrow Haunt rides the roofs at night and spoils the village's milk and grain.");
+    hv.mobs=[...new Set([...(hv.mobs||[]),hau.id])];
+    hv.traps=[...(hv.traps||[]),trap("Barrow door in the pasture","Something's Off",`${F}d6 Necrotic and a Drained stack on a failed Evade. Carrying iron grants Advantage.`)];
+    hv.storyArcs=fill(hv.storyArcs,"The haunted pastures: livestock die each night (Barrow Blight starts in the Gardens). Locals want the mound sealed with iron; a greedy Elite wants it opened for the treasure.")}
+  f.mobs.filter(m=>m.kind==="Boss"&&[gc,rg].filter(Boolean).some(n=>n.boss===m.id)).forEach(m=>{m.traits=[...(m.traits||[]),{name:"Sentient Commander",text:BARROW_RULES.sentient}]});
+  f.packs=[...(f.packs||[]),BARROW_PACK.id];return {off,thr,cow,hau}}
+function barrowBanner(f){if(!BARROW_PACK.match(f)||(f.packs||[]).includes(BARROW_PACK.id))return "";
+  if(S.packHidden?.[f.id])return "";
+  return `<section class="panel packbanner"><header><h2>📜 ${esc(BARROW_PACK.title)}</h2><span class="muted" style="font-size:13px">Wight Field Officer · Life Drain · Barrow Blight · Norse lore</span></header>
+   <ul class="packlist">${BARROW_PACK.summary(f).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+   <p class="dim" style="font-size:12px;margin:6px 0 10px">Only adds. Nothing you wrote is deleted; new text goes under what's there.</p>
+   <div class="row" style="gap:8px"><button class="btn gold" data-act="packApply">Add it to Floor ${esc(f.number)}</button><button class="btn ghost" data-act="packHide">Not now</button></div></section>`}
+
+const LIBRARY={barrow:{label:"Barrow Command",items:BARROW_LIB,tip:"Norse draugr and barrow-wights: a sentient Field Officer that commands mindless Thralls, Life Drain, and Barrow Blight (agricultural warfare). Built for this game's rules."},home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
 /* ===================== GENERATOR TABLES (original) ===================== */
 const R=a=>a[Math.floor(Math.random()*a.length)];
 const RN=(a,n)=>{const c=a.slice(),o=[];while(o.length<n&&c.length)o.push(c.splice(Math.floor(Math.random()*c.length),1)[0]);return o};
