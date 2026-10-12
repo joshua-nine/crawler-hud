@@ -358,6 +358,38 @@ body.player #cloudBanner,body.player #localUp{display:none!important}
 .hotgrid{grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr))}.gearg{grid-template-columns:repeat(auto-fill,minmax(min(170px,100%),1fr))}
 @media (max-width:900px){.ddb-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;overflow:visible}.ddb-tabs button{justify-content:center;padding:8px 4px;font-size:12px}.ddb-tabs .tl{display:none}.ddb-tabs .ts{display:inline}
  .hotgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* mood */
+:root{--mood:var(--gold);--mood-hi:var(--gold-hi);--mood-ink:var(--gold-ink);--mood-glow:rgba(216,178,90,.35);--sys:#2fd2ff}
+.toast{background:var(--mood);color:var(--mood-ink);box-shadow:0 6px 26px var(--mood-glow);max-width:min(92vw,520px);text-align:center;border-radius:18px}
+body[data-mood="overjoyed"] .toast{background:linear-gradient(90deg,#ff6ad5,#ffd36a,#6affc8,#6ab8ff,#ff6ad5);background-size:300% 100%;animation:moodRain 3s linear infinite}
+body[data-mood="wrathful"] .toast:not([hidden]){animation:moodShake .45s}
+@keyframes moodRain{to{background-position:300% 0}}@keyframes moodShake{0%,100%{transform:translateX(-50%)}20%{transform:translateX(calc(-50% - 6px))}40%{transform:translateX(calc(-50% + 6px))}60%{transform:translateX(calc(-50% - 4px))}80%{transform:translateX(calc(-50% + 3px))}}
+.aibox{border-color:color-mix(in srgb,var(--sys) 45%,transparent);box-shadow:0 0 22px color-mix(in srgb,var(--sys) 22%,transparent) inset;color:color-mix(in srgb,var(--sys) 30%,#fff)}
+.aihead{color:var(--sys)}
+body[data-mood] .pop-card header small{color:var(--mood)}body[data-mood] .pop-card{box-shadow:0 0 0 1px color-mix(in srgb,var(--mood) 50%,transparent),0 20px 60px #000}
+.fxbanner{color:var(--mood-ink);background:linear-gradient(90deg,transparent,var(--mood) 15%,var(--mood-hi) 50%,var(--mood) 85%,transparent);box-shadow:0 0 40px var(--mood-glow)}
+.btn.moodon{border-color:var(--mood);color:var(--mood-hi);box-shadow:0 0 14px var(--mood-glow)}
+.moodchip{border:1px solid var(--mood);color:var(--mood-hi);background:color-mix(in srgb,var(--mood) 14%,transparent);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.moodgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}@media (max-width:420px){.moodgrid{grid-template-columns:repeat(2,1fr)}}
+.moodpick{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border-radius:12px;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel));color:#fff;cursor:pointer;font-weight:600}
+.moodpick b{font-size:26px;line-height:1}.moodpick i{position:absolute;top:4px;right:8px;font-style:normal;font-size:11px;color:var(--c)}
+.moodpick.on,.moodpick:hover{background:var(--c);color:var(--ink)}.moodpick.on i,.moodpick:hover i{color:var(--ink)}
+/* combat */
+.seg{display:flex;gap:4px;padding:4px;border:1px solid var(--line-2);border-radius:12px;margin-bottom:12px}.seg button{flex:1;border:0;background:none;color:var(--muted);padding:10px 6px;border-radius:9px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
+.cbsum{margin-top:8px;padding:10px 12px;border:1px dashed var(--line-2);border-radius:10px;font-size:14px}
+.dtype{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--line-2);color:var(--muted)}
+.cbts{display:grid;gap:8px}.cbt{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.cbt.on{border-color:var(--gold);background:rgba(216,178,90,.07)}
+.cbt-who{display:flex;gap:10px;align-items:center;cursor:pointer;min-width:0;flex:1 1 220px}.cbt-who input{width:20px;height:20px;flex:none}.cbt-who b{display:block}.cbt-who i{font-style:normal;font-size:12px;color:var(--muted)}
+.cbt-av{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:var(--gold-ink);font-weight:700;overflow:hidden}.cbt-av img{width:100%;height:100%;object-fit:cover}
+.cbt-ev{display:flex;gap:6px;flex:1 1 200px}.cbt-ev select{flex:1;min-width:0}.cbt-ev input{width:90px}
+.cbchk{display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:14px;cursor:pointer}.cbchk input{width:20px!important;height:20px;flex:none;margin:1px 0 0}
+.btn.big{padding:12px 22px;font-size:16px}
+.cblog{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}.cblog header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.cblog header .dim{flex:1;font-size:12px;min-width:0;overflow-wrap:anywhere}
+.cblr{padding:6px 0;border-top:1px solid var(--line)}.cblr .neg{color:#ff7a66;font-weight:700}.cblr .pos{color:#7dffb2;font-weight:600}
+.gearline .gtag{display:inline-block;margin:2px 4px 0 0;padding:1px 8px;border-radius:99px;border:1px solid rgba(93,180,135,.5);color:#9de8bf;font-size:12px}
+.gearb{font-style:normal;font-size:10px;color:#9de8bf;margin-left:3px}
 /* player app */
 .pl-top{display:flex;align-items:center;gap:10px;padding:12px 0 6px;flex-wrap:wrap}
 .pl-brand{font-family:var(--f-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi)}
@@ -408,6 +440,7 @@ body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
         <button class="btn gold" data-act="newFloor">+ New floor</button>
         <button class="btn" data-act="manageFloors" aria-expanded="false" id="manageBtn">Manage floors</button>
         <button class="btn" data-act="driveBackup" id="driveBtn">☁ Back up to Drive</button>
+        <button class="btn" data-act="moodOpen" id="moodBtn">🤖 AI mood</button>
       </div>
       <div class="save" id="saveState">Loading…</div>
     </div>
@@ -547,7 +580,7 @@ async function deleteFloor(id){
 }
 
 /* ===================== RENDER: SHELL ===================== */
-const TABS=[["overview","Floor"],["gen","Generator"],["nb","Neighborhoods"],["quests","Quests"],["mobs","Mob Forge"],["loot","Loot"],["enc","Encounters"],["sheet","Run Sheet"],["sheets","Sheets"]];
+const TABS=[["overview","Floor"],["gen","Generator"],["nb","Neighborhoods"],["quests","Quests"],["mobs","Mob Forge"],["loot","Loot"],["enc","Encounters"],["combat","Combat"],["sheet","Run Sheet"],["sheets","Sheets"]];
 function renderShell(){
   const sel=$("#floorSel");const ids=Object.keys(S.floors).sort((a,b)=>(S.floors[a].number-S.floors[b].number)||(S.floors[a].name>S.floors[b].name?1:-1));
   sel.innerHTML=ids.length?ids.map(id=>`<option value="${id}" ${id===S.cur?"selected":""}>Floor ${esc(S.floors[id].number)} · ${esc(S.floors[id].name)}</option>`).join(""):`<option>No floors yet</option>`;
@@ -595,7 +628,7 @@ function renderMain(){
   const f=F();
   if(S.rc&&S.tab==="sheets"){m.innerHTML=vRaceClass();renderPop();return}
   if(!f){m.innerHTML=`<div class="panel empty"><h2 style="margin-bottom:8px">No floors yet</h2><p>Start with <b>+ New floor</b>. Pick a floor number and the rules math fills itself in.</p><p style="margin-top:12px">Have a backup file? <label class="btn sm" style="cursor:pointer">Restore backup<input type="file" accept="application/json,.json" id="restoreFile" hidden></label></p></div>`;renderPop();return}
-  m.innerHTML=({overview:vOverview,gen:vGen,nb:vNbs,quests:vQuests,mobs:vMobs,loot:vLoot,sheets:vSheets,enc:vEnc,sheet:vSheet}[S.tab]||vOverview)(f);
+  m.innerHTML=({overview:vOverview,gen:vGen,nb:vNbs,quests:vQuests,mobs:vMobs,loot:vLoot,sheets:vSheets,enc:vEnc,combat:vCombat,sheet:vSheet}[S.tab]||vOverview)(f);
   if(S.tab==="mobs")updateMobDerived();
   renderPop();
 }
@@ -1054,7 +1087,7 @@ function sheetText(f){
 
 /* ===================== EVENTS ===================== */
 document.addEventListener("input",e=>{
-  const t=e.target;if(t.id==="importFile"||t.id==="sheetImport"||t.id==="sheetPdfPick"||t.id==="restoreFile"||t.id==="loadCode"||t.id==="shareCode"||t.id==="annText")return;
+  const t=e.target;if(t.dataset&&t.dataset.cb!=null){cbInput(t,false);return}if(t.id==="importFile"||t.id==="sheetImport"||t.id==="sheetPdfPick"||t.id==="restoreFile"||t.id==="loadCode"||t.id==="shareCode"||t.id==="annText")return;
   if(t.dataset.wz&&S.wiz){let v=t.value;if("num" in t.dataset)v=+v||1;setPath(S.wiz,t.dataset.wz,v);
     if("wzr" in t.dataset){clearTimeout(S._wzT);S._wzT=setTimeout(()=>keepFocus(renderMain),400);return}
     const nm=document.querySelector(".wzname");if(nm)nm.textContent=S.wiz.name||"New Crawler";const pt=document.querySelector(".wzport");if(pt)pt.innerHTML=wzPortrait(S.wiz,Object.fromEntries(STATS.map(s=>[s,statMod(S.wiz.stats[s])])));
@@ -1072,7 +1105,7 @@ document.addEventListener("input",e=>{
   if(S.tab==="mobs")updateMobDerived();
 });
 document.addEventListener("change",e=>{
-  const t=e.target;
+  const t=e.target;if(t.dataset&&t.dataset.cb!=null){cbInput(t,true);return}
   if(t.id==="floorSel"){S.cur=t.value;S.confirm=null;renderAll();return}
   if(t.id==="importFile"){importFile(t.files[0]);return}
   if(t.dataset.img&&t.type==="file"){handleImage(t);return}
@@ -1106,7 +1139,7 @@ function keepFocus(fn){const a=document.activeElement,p=a?.dataset?.p,sel=a&&"se
 
 document.addEventListener("click",async e=>{
   const tabB=e.target.closest("[data-tab]");if(tabB){S.tab=tabB.dataset.tab;S.confirm=null;renderShell();renderMain();return}
-  const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,f=F();
+  const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,f=F();if(/^(cb|mood)/.test(a)){combatAct(a,el);return}
   if(a==="liveSignOut"){(async()=>{try{await S.fb.Au.signOut(S.fb.auth)}catch(_){}lsSet("dcc.gmDevice",false);lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString()})();return}
   if(a==="liveGoogle"){liveGoogle();return}if(a==="liveLink"){liveLinkGoogle();return}if(a==="liveDevice"){liveDeviceOnly();return}if(a==="liveNewRoom"){lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString();return}if(a==="cloudRetry"){location.reload();return}
   if(el.tagName==="BUTTON"&&el.closest(".head")&&a!=="toggleCard")e.stopPropagation();
@@ -1238,7 +1271,7 @@ document.addEventListener("click",async e=>{
    case "sheetMode":S.sheetMode=el.dataset.k;renderMain();return;
    case "rollClose":{const b=document.getElementById("rollbox");if(b)b.hidden=true;return}
    case "rollStat":{const c=S.sheets[S.sheetSel],k=sheetCalc(c),st=el.dataset.k;showRoll(`${STAT_NAME[st]} Check`,`d20${sgn(k.mods[st])}`,"Stat Check");return}
-   case "rollEvade":{const c=S.sheets[S.sheetSel],k=sheetCalc(c);showRoll("Evade",`d20${sgn(k.mods.DEX+num(c.evadeBuffs))}`,"Interrupt");return}
+   case "rollEvade":{const c=S.sheets[S.sheetSel],k=sheetCalc(c);showRoll("Evade",`d20${sgn(k.mods.DEX+num(c.evadeBuffs)+k.gb.evade)}`,"Interrupt");return}
    case "rollAtk":{const c=S.sheets[S.sheetSel],k=sheetCalc(c),a=c.attacks[+el.dataset.i],fl=+c.floor||+(F()?.number)||1;
      if(a.hitTxt)showRoll(`${a.name}: to hit`,`d20+${String(a.hitTxt).replace(/F/g,fl)}`,"Attack");else showRoll(`${a.name}: to hit`,`d20${sgn(+a.rank||0)}${sgn(k.mods[a.stat]||0)}`,`Rank ${a.rank||0} + ${a.stat}`);
      const sk=c.skills.find(s=>s.name&&(s.name===a.name||a.name.includes(`(${s.name})`)||s.name.includes(`(${a.name})`)));if(sk&&!sk.done){sk.done=true;saveSheet(c.id);renderMain()}return}
@@ -1521,12 +1554,12 @@ function normSheet(x){const b=blankSheet(x.kind||"crawler");const o={...b,...x};
   o.racial=pad(x.racial,22,"");o.classAb=pad(x.classAb,22,"");o.sponsors=pad(x.sponsors,3,"");o.hbLost=pad(x.hbLost,Math.max(10,+o.hbSlots||10),false);
   o.pet.hbLost=pad(o.pet.hbLost,10,false);o.mount.hbLost=pad(o.mount.hbLost,10,false);o.space.amenities=pad(o.space.amenities,11,"");return o}
 const num=v=>+(String(v??"").replace(/[^\d.-]/g,""))||0;
-function sheetCalc(c){const mods=Object.fromEntries(STATS.map(s=>[s,statMod(c.stats[s]?.e)]));
+function sheetCalc(c){const gb=gearBuffs(c);const mods=Object.fromEntries(STATS.map(s=>[s,gb.stat[s]?statMod(num(c.stats[s]?.e)+gb.stat[s]):statMod(c.stats[s]?.e)]));
   const slots=Math.max(1,+c.hbSlots||10),lost=c.hbLost.slice(0,slots).filter(Boolean).length;
-  const evade=c.fixed?.evade||`d20${sgn(mods.DEX+num(c.evadeBuffs))}`,dr=c.fixed?.dr!=null&&c.fixed?.dr!==""?c.fixed.dr:num(c.armor)+num(c.drBuffs);
+  const evade=c.fixed?.evade||`d20${sgn(mods.DEX+num(c.evadeBuffs)+gb.evade)}`,dr=c.fixed?.dr!=null&&c.fixed?.dr!==""?num(c.fixed.dr)+gb.dr:num(c.armor)+num(c.drBuffs)+gb.dr;
   const atk=c.attacks.map(a=>{const hm=mods[a.stat]||0,dm=a.dmgStat?mods[a.dmgStat]||0:0;
     return {hitMod:a.hitTxt||sgn(hm),dmgMod:a.hitTxt?"":(a.dmgStat?sgn(dm):""),hit:a.hitTxt||(a.name?`${a.rank||0}${sgn(hm)}`:""),dmg:a.hitTxt?a.dice:(a.dice?`${a.dice}${a.dmgStat?sgn(dm):""}`:"")}});
-  return {mods,slots,lost,left:slots-lost,hbVal:mods.CON,evade,dr,mana:c.kind==="crawler"?num(c.stats.INT.e):"",atk,petHb:c.pet.CON?statMod(c.pet.CON):""}}
+  return {mods,slots,lost,left:slots-lost,hbVal:mods.CON,evade,dr,mana:c.kind==="crawler"?num(c.stats.INT.e)+gb.stat.INT:"",atk,gb,petHb:c.pet.CON?statMod(c.pet.CON):""}}
 /* ---- storage (own collection, shared across floors) ---- */
 const sheetTimers={};
 function sheetsLsSave(){try{localStorage.setItem(LS_SHEETS,JSON.stringify(S.sheets))}catch(e){}}
@@ -2213,19 +2246,19 @@ function ddbHeader(c,k){const sp=c.species&&typeof SPECIES!=="undefined"?SPECIES
    <div class="ddb-act">${isC?`<button class="btn gold sm" data-act="levelUp">Level up</button><button class="btn sm" data-act="descendPop">Descend ↓</button>`:""}<button class="btn sm ghost" data-act="sheetMode" data-k="edit" title="Edit every field">✎ Edit</button><button class="btn sm ghost" data-act="shareOpen" title="A code you can text to ${PLAYER_BUILD?"your GM":"the player"}">⇄ ${PLAYER_BUILD?"Send to GM":"Send to player"}</button></div></div>
    ${c.uplift?.state==="waiting"?`<div class="biscuit" style="margin:10px 0 0"><b>Can't talk yet</b><p>Waiting for the Enhanced Pet Biscuit${c.uplift.holder?` (${esc(c.uplift.holder)} has it)`:""}.</p><button class="btn gold sm" data-act="feedBiscuit">Feed the biscuit</button></div>`:""}
    ${isC&&+c.floor>=3&&(!c.cls||/choose on Floor 3/.test(c.cls)||(c.statPts||0)>0)?`<div class="choicebar"><b>Choices waiting</b><span>${[(!c.cls||/choose on Floor 3/.test(c.cls))?"Race & class":"",(c.statPts||0)>0?`${c.statPts} Stat Point${c.statPts>1?"s":""}`:""].filter(Boolean).join(" · ")}</span><button class="btn gold sm" data-act="choicesOpen">Choose now</button></div>`:""}`}
-function ddbStats(c,k){return `<div class="ddb-stats">${STATS.map(s=>{const e=c.stats[s].e,u=c.stats[s].u;return `<button class="ddb-ab" data-act="rollStat" data-k="${s}" title="Roll a ${STAT_NAME[s]} Stat Check"><small><span class="lg">${STAT_NAME[s]}</span><span class="sh">${s}</span></small><b>${sgn(k.mods[s])}</b><span class="mono">${esc(e)}${String(u)!==String(e)&&u!==""?`<i title="Unenhanced">${esc(u)}</i>`:""}</span></button>`}).join("")}</div>`}
+function ddbStats(c,k){return `<div class="ddb-stats">${STATS.map(s=>{const e=c.stats[s].e,u=c.stats[s].u;return `<button class="ddb-ab" data-act="rollStat" data-k="${s}" title="Roll a ${STAT_NAME[s]} Stat Check"><small><span class="lg">${STAT_NAME[s]}</span><span class="sh">${s}</span></small><b>${sgn(k.mods[s])}</b><span class="mono">${k.gb.stat[s]?num(e)+k.gb.stat[s]:esc(e)}${k.gb.stat[s]?`<em class="gearb">${sgn(k.gb.stat[s])}</em>`:""}${String(u)!==String(e)&&u!==""?`<i title="Unenhanced">${esc(u)}</i>`:""}</span></button>`}).join("")}</div>`}
 function ddbVitals(c,k){const isC=c.kind==="crawler",mx=+k.mana||0,cur=c.manaCur===""||c.manaCur==null?mx:+c.manaCur;
   const n=k.slots,cells=Array.from({length:n},(_,i)=>`<button class="hbs ${c.hbLost[i]?"lost":""}" data-act="hbToggle" data-i="${i}" aria-label="Health slot ${i+1}" style="--h:${Math.round(120*i/Math.max(1,n-1))}"><span>${k.hbVal}</span></button>`).join("");
   return `<div class="ddb-vit">
    <div class="ddb-box hp"><small>Health Bar</small><b class="mono">${k.left}<span class="dim">/${n}</span></b><i>slots × ${k.hbVal} each</i><div class="hbbar mini">${cells}</div>
     <div class="row" style="gap:6px;justify-content:center;margin-top:6px"><button class="btn sm ghost" data-act="hbHit">− Lose 1</button><button class="btn sm ghost" data-act="hbHeal" data-k="2">+ Heal 2</button></div></div>
-   <button class="ddb-box" data-act="rollEvade" ${c.fixed?"disabled":""}><small>Evade</small><b class="mono">${c.fixed?esc(k.evade):sgn(k.mods.DEX+num(c.evadeBuffs))}</b><i>${c.fixed?"target number":"d20 · tap to roll"}</i></button>
-   <div class="ddb-box"><small>DR</small><b class="mono">${esc(k.dr)}</b><i>damage reduction</i></div>
-   <div class="ddb-box"><small>Move</small><b class="mono">${esc(c.move)}<span class="dim" style="font-size:13px"> ft</span></b><i>Step ${esc(c.step)} ft</i></div>
+   <button class="ddb-box" data-act="rollEvade" ${c.fixed?"disabled":""}><small>Evade</small><b class="mono">${c.fixed?esc(k.evade):sgn(k.mods.DEX+num(c.evadeBuffs)+k.gb.evade)}</b><i>${c.fixed?"target number":"d20 · tap to roll"}</i></button>
+   <div class="ddb-box"><small>DR</small><b class="mono">${esc(k.dr)}</b><i>damage reduction${k.gb.dr?` · ${sgn(k.gb.dr)} gear`:""}</i></div>
+   <div class="ddb-box"><small>Move</small><b class="mono">${k.gb.move?num(c.move)+k.gb.move:esc(c.move)}<span class="dim" style="font-size:13px"> ft</span></b><i>Step ${esc(c.step)} ft</i></div>
    ${isC?`<div class="ddb-box"><small>Mana</small><b class="mono">${cur}<span class="dim">/${mx}</span></b><div class="row" style="gap:4px;justify-content:center"><button class="btn xs ghost" data-act="adj" data-k="mana" data-v="-1" aria-label="Spend 1 Mana">−</button><button class="btn xs ghost" data-act="adj" data-k="mana" data-v="1" aria-label="Restore 1 Mana">+</button></div></div>
    <div class="ddb-box"><small>AI Favor</small><b class="mono">${esc(c.aiFavor||0)}</b><div class="row" style="gap:4px;justify-content:center"><button class="btn xs ghost" data-act="adj" data-k="favor" data-v="-1" aria-label="Spend AI Favor">−</button><button class="btn xs ghost" data-act="adj" data-k="favor" data-v="1" aria-label="Gain AI Favor">+</button></div></div>`:""}
    <div class="ddb-box"><small>Size</small><b class="mono">${esc(c.size)}</b><i>${esc((SIZES.find(x=>x[0]===+c.size)||[,""])[1])}</i></div></div>
-   ${c.debuffs?`<div class="ddb-cond"><small>Debuffs</small> ${esc(c.debuffs)}</div>`:""}`}
+   ${c.debuffs?`<div class="ddb-cond"><small>Debuffs</small> ${esc(c.debuffs)}</div>`:""}${gearLine(c,k)}`}
 function ddbActions(c,k){const atk=c.attacks.map((a,i)=>({a,i,x:k.atk[i]})).filter(o=>o.a.name);
   const fl=+c.floor||+(F()?.number)||1;
   return `<h3 class="ddb-h">Attacks</h3>${atk.length?`<div class="ddb-list">${atk.map(({a,i,x})=>`<div class="ddb-row atk"><div class="nm"><b>${esc(a.name)}</b><i>${esc(a.effects||"")}</i></div>
@@ -2274,7 +2307,7 @@ function sheetPlay(c){const k=sheetCalc(c),t=S.ddbTab||"actions";
 function vPlayer(){if(S.wiz)return vWizard();
   const all=Object.values(S.sheets).filter(x=>x.kind==="crawler").sort((a,b)=>String(a.name).localeCompare(b.name));
   if(!S.sheetSel||!S.sheets[S.sheetSel]||S.sheets[S.sheetSel].kind!=="crawler")S.sheetSel=all[0]?.id||null;const c=S.sheets[S.sheetSel];
-  return `<div class="pl-top"><span class="pl-brand">${PLAYER_BUILD?"Crawler HUD":"Crawler HUD"}</span><div class="pl-chips">${all.map(x=>`<button class="chip" aria-pressed="${x.id===S.sheetSel}" data-act="sheetPick" data-k="${x.id}">${x.species&&SPECIES[x.species]?SPECIES[x.species].emoji+" ":""}${esc(x.name)}</button>`).join("")}<button class="chip" data-act="wzNew">+ New</button></div>${livePill()}${canSpeak()?`<button class="btn sm ${soundOn()?"gold":"ghost"}" data-act="soundToggle" aria-pressed="${soundOn()}">${soundOn()?"🔊 Sound on":"🔈 Sound off"}</button>`:""}${S.live?.role==="player"?"":`<button class="btn sm" data-act="loadOpen">Load from GM</button>`}${PLAYER_BUILD?"":`<button class="btn sm ghost" data-act="player" data-k="off">GM tools</button>`}</div>
+  return `<div class="pl-top"><span class="pl-brand">${PLAYER_BUILD?"Crawler HUD":"Crawler HUD"}</span><div class="pl-chips">${all.map(x=>`<button class="chip" aria-pressed="${x.id===S.sheetSel}" data-act="sheetPick" data-k="${x.id}">${x.species&&SPECIES[x.species]?SPECIES[x.species].emoji+" ":""}${esc(x.name)}</button>`).join("")}<button class="chip" data-act="wzNew">+ New</button></div>${moodChip()}${livePill()}${canSpeak()?`<button class="btn sm ${soundOn()?"gold":"ghost"}" data-act="soundToggle" aria-pressed="${soundOn()}">${soundOn()?"🔊 Sound on":"🔈 Sound off"}</button>`:""}${S.live?.role==="player"?"":`<button class="btn sm" data-act="loadOpen">Load from GM</button>`}${PLAYER_BUILD?"":`<button class="btn sm ghost" data-act="player" data-k="off">GM tools</button>`}</div>
    ${S.live?.role==="player"&&!all.length?`<section class="panel" style="margin-top:10px"><p style="margin:0">Connected to your GM's game. Create your crawler, or open the personal link your GM sent you.</p></section>`:""}
    ${c?(S.sheetMode==="edit"?sheetEditor(c):sheetPlay(c)):`<section class="panel empty"><h2>No crawlers yet</h2><p>Create one to get started.</p><button class="btn gold" data-act="wzNew">+ Create a crawler</button></section>`}`}
 
@@ -2315,6 +2348,8 @@ function renderPop(){let el=document.getElementById("pop");if(!el){el=document.c
      <div class="lvlgrid">${LEVEL_REASONS.map(([l,n],i)=>`<button class="lvlbtn" data-act="levelApply" data-i="${i}"><b>${typeof n==="number"?"+"+n:n}</b><span>${esc(l)}</span></button>`).join("")}</div>
      <div class="row" style="margin-top:10px;gap:6px;align-items:flex-end"><label class="f" style="width:110px"><span>Custom</span><input type="number" id="lvlN" min="1" max="50" value="1"></label><button class="btn sm" data-act="levelApply" data-i="custom">Add levels</button></div>
      <p class="dim" style="font-size:12px;margin-top:10px">${+c.floor>=3?`On Floor 3+, each level gives ${H.statPerLevel} Stat Points (house rule, change below). You'll pick where they go next.`:"On Floors 1–2 you just record the level. Stat Points start on the Third Floor."}</p>${houseBox()}`}
+  if(P.mode==="mood")body=moodPop();
+  if(P.mode==="info")body=`<div class="infopop">${P.html}</div>`;
   if(P.mode==="announce")body=`<div class="aibox"><div class="aihead">SYSTEM MESSAGE</div><div style="white-space:pre-wrap;font-size:16px">${esc(P.say)}</div></div><div class="row" style="margin-top:10px;justify-content:flex-end">${speakBtn(P.say,P.voice)}</div>`;
   if(P.mode==="link")body=`<p>Send this link to the player once (text, Discord, email). It opens their character and keeps it in sync. No account needed.</p><textarea id="shareCode" rows="3" readonly style="font-family:var(--f-mono);font-size:12px;word-break:break-all">${esc(P.code)}</textarea><div class="row" style="margin-top:10px;justify-content:flex-end">${navigator.share?`<button class="btn" data-act="shareNative">Share…</button>`:""}<button class="btn gold" data-act="shareCopy">Copy link</button></div>`;
   if(P.mode==="compose"){const cs=Object.values(S.sheets).filter(x=>x.kind==="crawler");body=`<label class="f"><span>Message</span><textarea id="annText" rows="4" placeholder="New achievement! You opened a door. Riveting.">${esc(P.text||"")}</textarea></label>
@@ -2329,7 +2364,7 @@ function renderPop(){let el=document.getElementById("pop");if(!el){el=document.c
   if(P.mode==="alloc"){const c=S.sheets[P.id],A=P.alloc,used=STATS.reduce((t,s)=>t+(A[s]||0),0),left=(c.statPts||0)-used;
     body=`<p>Spend ${esc(c.name)}'s Stat Points. Each point raises a Stat by 1 (Unenhanced and Enhanced). <b>${left}</b> left.</p>${allocGrid(c,A,"allocAdj",left)}
      <div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn ghost" data-act="allocLater">Decide later</button><button class="btn gold" data-act="allocApply" ${used?"":"disabled"}>Apply ${used} point${used===1?"":"s"}</button></div>`}
-  el.innerHTML=`<div class="pop-bg" data-act="popClose"></div><div class="pop-card" role="dialog" aria-modal="true" aria-labelledby="popT"><header><div><small>${P.mode==="levelPick"?"LEVEL UP":P.mode==="alloc"?"STAT POINTS":P.mode==="share"?"SHARE CODE":P.mode==="load"?"LOAD A CHARACTER":P.mode==="img"?"IMAGE":P.mode==="link"?"PLAYER LINK":P.mode==="compose"?"MESSAGE THE PARTY":"SYSTEM NOTIFICATION"}</small><h2 id="popT">${esc(P.title||"")}</h2></div><button class="x" data-act="popClose" aria-label="Close">✕</button></header><div class="pop-body">${body}</div>
+  el.innerHTML=`<div class="pop-bg" data-act="popClose"></div><div class="pop-card" role="dialog" aria-modal="true" aria-labelledby="popT"><header><div><small>${P.mode==="levelPick"?"LEVEL UP":P.mode==="alloc"?"STAT POINTS":P.mode==="share"?"SHARE CODE":P.mode==="load"?"LOAD A CHARACTER":P.mode==="img"?"IMAGE":P.mode==="link"?"PLAYER LINK":P.mode==="compose"?"MESSAGE THE PARTY":P.mode==="mood"?"SYSTEM AI MOOD":P.mode==="info"?"BACKUP":"SYSTEM NOTIFICATION"}</small><h2 id="popT">${esc(P.title||"")}</h2></div><button class="x" data-act="popClose" aria-label="Close">✕</button></header><div class="pop-body">${body}</div>
    ${P.mode==="changes"||P.mode==="announce"?`<footer><button class="btn gold" data-act="popClose">${(S.popQ||[]).length?`Next (${S.popQ.length})`:"Done"}</button></footer>`:""}</div>`}
 function houseBox(){const H=house();return `<details class="housebox"><summary>House rules</summary><div class="row" style="gap:10px;margin-top:8px;align-items:flex-end"><label class="f" style="width:150px"><span>Stat Points per level (Floor 3+)</span><input type="number" min="0" max="10" data-house="statPerLevel" value="${H.statPerLevel}"></label>
   <label class="row" style="gap:6px"><input type="checkbox" data-house="bankTutorial" ${H.bankTutorial?"checked":""}> Award points for levels earned on Floors 1–2 when reaching Floor 3</label></div><p class="dim" style="font-size:12px;margin:6px 0 0">The starter books don't give the number; swap in the Core Rulebook's when it's out.</p></details>`}
@@ -2451,7 +2486,7 @@ function sharePop(){const P=S.pop;if(P.mode==="share")return `<p>${PLAYER_BUILD?
    <textarea id="loadCode" rows="5" placeholder="DCCZ:…" style="font-family:var(--f-mono);font-size:12px"></textarea>${P.err?`<p class="tip" style="border-color:var(--bad);margin-top:8px">${esc(P.err)}</p>`:""}
    <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn gold" data-act="loadApply">Load character</button></div>`}
 async function driveBackup(btn){let mcp=null;try{mcp=await window.claude?.use?.("mcp")}catch(_){mcp=null}
-  if(!mcp){toast("Drive backup isn't available in this view. Open the Floor Builder from claude.ai.");return}
+  if(!mcp){if(S.live?.role==="gm")return liveDriveBackup(btn);const nm=downloadBackup();toast("Backup saved to this device: "+nm);return}
   const D="Google Drive";if(btn){btn.disabled=true;btn.textContent="Backing up…"}
   try{let folder=null;const q=await mcp.callTool(D,"search_files",{query:"title = 'Floor Builder Backups' and mimeType = 'application/vnd.google-apps.folder'",excludeContentSnippets:true},{cache:false});
     folder=(q.payload?.files||[])[0]||null;
@@ -2504,10 +2539,10 @@ const canSpeak=()=>typeof window.speechSynthesis!=="undefined"&&typeof window.Sp
 function soundOn(){if(S.soundOn==null){try{S.soundOn=localStorage.getItem("floorbuilder.sound")==="1"}catch(_){S.soundOn=false}}return S.soundOn}
 function setSound(v){S.soundOn=!!v;try{localStorage.setItem("floorbuilder.sound",v?"1":"0")}catch(_){}}
 function pickVoice(P){const vs=speechSynthesis.getVoices()||[];return vs.find(x=>P.pref.test(x.name)&&/^en/i.test(x.lang))||vs.find(x=>P.pref.test(x.lang))||vs.find(x=>/^en/i.test(x.lang))||null}
-function speakAs(text,voice){if(!canSpeak()||!text)return;const P=VOICE_PRESETS[voice]||VOICE_PRESETS.system;
+function speakAs(text,voice){if(!canSpeak()||!text)return;const P=VOICE_PRESETS[voice]||VOICE_PRESETS.system,M=(!voice||voice==="system")&&S.mood?MOODS[S.mood]:null;
   const clean=String(text).replace(/[*_#>`]/g,"").replace(/\s+/g," ").trim();const parts=clean.match(/[^.!?…]+[.!?…]*["”']?/g)||[clean];
   try{speechSynthesis.cancel();const v=pickVoice(P);parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p.trim());if(v)u.voice=v;
-    const last=parts.length>1&&i===parts.length-1;u.rate=P.rate*(last?.9:1);u.pitch=Math.max(0,P.pitch-(last?.1:0));speechSynthesis.speak(u)})}catch(_){}}
+    const last=parts.length>1&&i===parts.length-1;u.rate=P.rate*(M?M.rate:1)*(last?.9:1);u.pitch=Math.max(0,P.pitch*(M?M.pitch:1)-(last?.1:0));speechSynthesis.speak(u)})}catch(_){}}
 if(canSpeak()){try{speechSynthesis.getVoices();speechSynthesis.addEventListener?.("voiceschanged",()=>{})}catch(_){}}
 const speakBtn=(textAttr,voice)=>canSpeak()?`<button class="btn sm ghost spk" data-act="speak" data-voice="${voice||"system"}" data-text="${esc(textAttr)}" title="Read it aloud">🔊 Read aloud</button>`:"";
 
@@ -2540,7 +2575,7 @@ async function liveGmBoot(){let fb;try{fb=await fbLoad()}catch(e){liveGate("erro
     if(meta&&meta.gmUid!==u.uid){liveGate("notyours",room);return null}
     if(!meta)await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
   else{room=roomCode();await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
-  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();
+  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();liveWatchMood();
   const base=c=>c==="floors"?livePath("gm/floors"):livePath("chars");
   return {collection:c=>({onSnapshot(cb,err){return D.onValue(D.ref(db,base(c)),snap=>{const v=snap.val()||{};
         cb({docs:Object.entries(v).filter(([,d])=>c==="floors"||d&&d.sheet).map(([id,d])=>({id,exists:true,data:()=>c==="floors"?d:{...d.sheet,id,__owner:!!d.ownerUid}}))})},e=>err&&err(e))},
@@ -2589,7 +2624,7 @@ async function livePlayerBoot(){const url=new URL(location.href);const room=(url
   if(lsGet("dcc.room","")!==room){lsSet("dcc.room",room)}lsSet("dcc.mychars",[...mine]);
   S.live={role:"player",room,uid:u.uid,online:false,mine,watch:{},seen:Math.max(lsGet("dcc.seen",0),Date.now()-120000),pendingSay:null};liveWatchConn();
   if(qc){S.sheetSel=qc}
-  mine.forEach(liveWatchChar);liveWatchEvents();renderMain()}
+  mine.forEach(liveWatchChar);liveWatchEvents();liveWatchMood();renderMain()}
 function liveWatchChar(id){if(!S.live||S.live.watch[id])return;const {D,db}=S.fb;
   S.live.watch[id]=D.onValue(D.ref(db,livePath(`chars/${id}`)),snap=>{const v=snap.val();if(!v||!v.sheet)return;
     if(!v.ownerUid)D.update(D.ref(db,livePath(`chars/${id}`)),{ownerUid:S.live.uid}).catch(()=>{});
@@ -2604,12 +2639,13 @@ function liveWatchEvents(){const {D,db}=S.fb;D.onChildAdded(D.query(D.ref(db,liv
       if(Q){Q.title=ev.title;Q.say=ev.say;renderPop();if(soundOn()&&ev.say)speakAs(ev.say,"system");return}
       S.live.pendingSay={title:ev.title,say:ev.say,until:Date.now()+6000};if(soundOn()&&ev.say)speakAs(ev.say,"system");
       setTimeout(()=>{const P=S.live.pendingSay;if(P&&P.title===ev.title){S.live.pendingSay=null;if(P.say)queuePop({mode:"announce",title:P.title,say:P.say,voice:"system"})}},2600)}
+    else if(ev.type==="hit"){queuePop({mode:"announce",title:ev.title||"You're hit!",say:ev.text,voice:ev.voice||"monster"});if(soundOn())speakAs(ev.text,ev.voice||"monster");if(ev.dying)setTimeout(()=>bannerFx("DYING","Get healed to 10% or you die"),900)}
     else if(ev.type==="announce"){chime();queuePop({mode:"announce",title:ev.title||"System Message",say:ev.text,voice:ev.voice||"system"});if(soundOn())speakAs(ev.text,ev.voice||"system")}},()=>{})}
 function queuePop(p){p.at=Date.now();if(S.pop){(S.popQ=S.popQ||[]).push(p);return}S.pop=p;renderPop()}
 /* ---- "video game" effects ---- */
 function fxLayer(){let l=document.getElementById("fx");if(!l){l=document.createElement("div");l.id="fx";l.setAttribute("aria-live","polite");document.body.appendChild(l)}return l}
 function hpFx(delta){const l=fxLayer(),d=document.createElement("div");d.className="fxflash "+(delta<0?"hurt":"heal");l.appendChild(d);setTimeout(()=>d.remove(),700);
-  const n=document.createElement("div");n.className="fxnum "+(delta<0?"hurt":"heal");n.textContent=(delta>0?"+":"−")+Math.abs(delta)+" Health";l.appendChild(n);setTimeout(()=>n.remove(),1600);
+  const n=document.createElement("div");n.className="fxnum "+(delta<0?"hurt":"heal");n.textContent=(delta>0?"+":"−")+Math.abs(delta)+" HB";l.appendChild(n);setTimeout(()=>n.remove(),1600);
   if(delta<0)try{navigator.vibrate?.(200)}catch(_){}}
 function bannerFx(big,small){const l=fxLayer(),b=document.createElement("button");b.className="fxbanner";b.innerHTML=`<b>${esc(big)}</b><span>${esc(small)}</span>${'<i></i>'.repeat(14)}`;b.onclick=()=>b.remove();l.appendChild(b);setTimeout(()=>b.remove(),3200);chime(true)}
 function chime(up){try{const C=window.AudioContext||window.webkitAudioContext;if(!C||!soundOn())return;S.ac=S.ac||new C();const ac=S.ac,t=ac.currentTime;
@@ -2626,6 +2662,186 @@ function stackTables(){if(innerWidth>700){document.querySelectorAll('table.stack
   document.querySelectorAll('.tbl').forEach(d=>{const t=d.querySelector('table');if(!t||t.classList.contains('stack')||t.classList.contains('adv'))return;if(t.scrollWidth<=d.clientWidth+2)return;
     const hs=[...t.querySelectorAll('thead th')].map(h=>h.textContent.trim());t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>{if(hs[i])c.dataset.label=hs[i]}));t.classList.add('stack')})}
 {let q=0;const run=()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;stackTables()})};new MutationObserver(run).observe(document.body,{childList:true,subtree:true});addEventListener('resize',()=>{document.querySelectorAll('table.stack').forEach(t=>t.classList.remove('stack'));run()});run()}
+
+/* ===================== SYSTEM AI MOOD ===================== */
+const MOODS={
+ wrathful:{n:1,label:"Wrathful",emoji:"😡",c:"#ff4d3d",hi:"#ff8a6b",ink:"#1d0402",sys:"#ff5a4a",rate:.95,pitch:.75,line:"The System AI is wrathful. Something is going to hurt."},
+ sullen:{n:2,label:"Sullen",emoji:"😒",c:"#8f98c4",hi:"#b9c0e6",ink:"#0b0f1e",sys:"#9aa6dd",rate:.85,pitch:.85,line:"The System AI is sullen. Don't expect any favors."},
+ suspicious:{n:3,label:"Suspicious",emoji:"🤨",c:"#b6e04a",hi:"#dcff7a",ink:"#12170a",sys:"#b6e04a",rate:.98,pitch:1.05,line:"The System AI is suspicious. It's watching you very closely."},
+ chatty:{n:4,label:"Chatty",emoji:"💬",c:"#3fd6f0",hi:"#8cecff",ink:"#04151a",sys:"#3fd6f0",rate:1.2,pitch:1.3,line:"The System AI is chatty today. Brace yourselves."},
+ pleasing:{n:5,label:"Pleasing",emoji:"😊",c:"#4fe39a",hi:"#9cffc8",ink:"#04160c",sys:"#4fe39a",rate:1.05,pitch:1.25,line:"The System AI is pleased. Enjoy it while it lasts."},
+ overjoyed:{n:6,label:"Overjoyed",emoji:"🤩",c:"#ff6ad5",hi:"#ffb1ea",ink:"#2a0420",sys:"#ff7fdc",rate:1.15,pitch:1.55,line:"The System AI is overjoyed! That's somehow worse."}};
+function applyMood(k,announce){const M=MOODS[k]||null;const prev=S.mood;S.mood=M?k:"";const r=document.documentElement.style;
+  if(M){r.setProperty("--mood",M.c);r.setProperty("--mood-hi",M.hi);r.setProperty("--mood-ink",M.ink);r.setProperty("--sys",M.sys);r.setProperty("--mood-glow",M.c+"66");document.body.dataset.mood=k}
+  else{["--mood","--mood-hi","--mood-ink","--sys","--mood-glow"].forEach(p=>r.removeProperty(p));delete document.body.dataset.mood}
+  const b=document.getElementById("moodBtn");if(b){b.innerHTML=M?`${M.emoji} AI: ${M.label}`:"🤖 AI mood";b.classList.toggle("moodon",!!M)}
+  if(S.player&&document.querySelector(".pl-top")&&!editing())renderMain();
+  if(announce&&M&&prev!==S.mood){toast(`${M.emoji} ${M.line}`);if(soundOn())speakAs(M.line,"system")}}
+const moodChip=()=>{const M=MOODS[S.mood];return M?`<button class="moodchip" data-act="moodInfo" title="The System AI's mood">${M.emoji} ${M.label}</button>`:""};
+function setMood(k){applyMood(k,true);try{localStorage.setItem("floorbuilder.mood",k||"")}catch(_){}
+  if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;D.set(D.ref(db,livePath("meta/mood")),k||null).catch(()=>toast("Couldn't reach players"))}}
+function liveWatchMood(){if(!S.fb||!S.live)return;const {D,db}=S.fb;let first=true;D.onValue(D.ref(db,livePath("meta/mood")),snap=>{const v=snap.val()||"";if(v!==S.mood)applyMood(v,!first);first=false},()=>{})}
+function moodPop(){return `<p class="dim" style="margin:0 0 10px">Changes the color of every System Message, toast and banner, and the AI's voice. ${S.live?.role==="gm"?"Your players see it too.":""}</p>
+  <div class="moodgrid">${Object.entries(MOODS).map(([k,M])=>`<button class="moodpick ${S.mood===k?"on":""}" data-act="moodSet" data-k="${k}" style="--c:${M.c};--ink:${M.ink}"><b>${M.emoji}</b><span>${M.label}</span><i>${M.n}</i></button>`).join("")}</div>
+  <div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn ghost" data-act="moodSet" data-k="">Clear</button><button class="btn gold" data-act="moodRoll">🎲 Roll 1d6</button></div>`}
+try{applyMood(localStorage.getItem("floorbuilder.mood")||"",false)}catch(_){}
+
+/* ===================== BACKUP: Google Drive from the web version, file download everywhere ===================== */
+function backupBody(){const now=new Date(),stamp=now.toISOString().slice(0,16).replace("T"," ").replace(":","");
+  return {name:`Floor Builder backup ${stamp}.json`,body:JSON.stringify({kind:"floor-builder-backup",v:1,savedAt:now.toISOString(),floors:S.floors,sheets:S.sheets})}}
+function downloadBackup(){const {name,body}=backupBody();const u=URL.createObjectURL(new Blob([body],{type:"application/json"}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);return name}
+async function driveErr(r){let j={};try{j=await r.json()}catch(_){}const t=JSON.stringify(j);return {status:r.status,disabled:/has not been used|is disabled|SERVICE_DISABLED|accessNotConfigured/i.test(t),msg:j.error?.message||""}}
+async function liveDriveBackup(btn){const fb=S.fb,u=fb?.auth?.currentUser;
+  if(!u||u.isAnonymous){downloadBackup();toast("Backup saved to this device. Sign in with Google to back up to Drive.");return}
+  if(btn){btn.disabled=true;btn.textContent="Backing up…"}
+  try{let tok=S.driveTok&&S.driveTok.exp>Date.now()?S.driveTok.t:null;
+    if(!tok){const p=new fb.Au.GoogleAuthProvider();p.addScope("https://www.googleapis.com/auth/drive.file");try{p.setCustomParameters({login_hint:u.email||""})}catch(_){}
+      const r=await fb.Au.reauthenticateWithPopup(u,p);tok=fb.Au.GoogleAuthProvider.credentialFromResult(r)?.accessToken;if(!tok)throw {code:"no-token"};S.driveTok={t:tok,exp:Date.now()+50*60e3}}
+    const H={Authorization:"Bearer "+tok},G="https://www.googleapis.com";
+    const q=encodeURIComponent("name='Floor Builder Backups' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+    let r=await fetch(`${G}/drive/v3/files?q=${q}&fields=files(id,webViewLink)`,{headers:H});if(!r.ok)throw await driveErr(r);
+    let folder=((await r.json()).files||[])[0];
+    if(!folder){r=await fetch(`${G}/drive/v3/files?fields=id,webViewLink`,{method:"POST",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify({name:"Floor Builder Backups",mimeType:"application/vnd.google-apps.folder"})});if(!r.ok)throw await driveErr(r);folder=await r.json()}
+    const {name,body}=backupBody(),bd="fbk"+Math.random().toString(36).slice(2);
+    const multi=`--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,parents:[folder.id],mimeType:"application/json"})}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
+    r=await fetch(`${G}/upload/drive/v3/files?uploadType=multipart&fields=id`,{method:"POST",headers:{...H,"Content-Type":"multipart/related; boundary="+bd},body:multi});if(!r.ok)throw await driveErr(r);
+    S.lastBackup={at:Date.now(),url:folder.webViewLink||""};try{localStorage.setItem("floorbuilder.lastBackup",JSON.stringify(S.lastBackup))}catch(_){}
+    toast(`Backed up ${Object.keys(S.floors).length} floors and ${Object.keys(S.sheets).length} sheets to Google Drive`)}
+  catch(e){const code=String(e?.code||"");if(e?.status===401)S.driveTok=null;
+    if(/popup-closed|cancelled-popup|user-cancelled/.test(code)){toast("Backup cancelled");return}
+    if(/user-mismatch/.test(code)){toast("Pick the same Google account you signed in with");return}
+    if(/popup-blocked/.test(code)){toast("Your browser blocked the Google window. Allow pop-ups for this site, then try again.");return}
+    const name=downloadBackup();
+    if(e?.disabled){S.pop={mode:"info",title:"Turn on Google Drive (one time)",html:`<p>Your backup was saved to this device as <b>${esc(name)}</b>.</p><p>To send backups straight to Google Drive, turn on the Drive API for your Firebase project once:</p><ol><li>Open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com?project=dcc-campaign" target="_blank" rel="noopener">Google Drive API for dcc-campaign</a>.</li><li>Tap <b>Enable</b>.</li><li>Wait a minute, then tap <b>Back up to Drive</b> again.</li></ol>`};renderPop()}
+    else toast("Drive didn't answer, so the backup was saved to this device instead")}
+  finally{renderBackupBtn()}}
+
+/* ===================== GEAR & BUFF MATH ===================== */
+const DTYPES=["Acid","Bludgeoning","Electric","Fire","Force","Holy","Ice","Necrotic","Piercing","Poison","Psychic","Slashing","Sonic"];
+const TYPE_ALIAS={cold:"Ice",frost:"Ice",lightning:"Electric",thunder:"Sonic",radiant:"Holy"};
+function normType(t){t=String(t||"").trim();if(!t)return "";const l=t.toLowerCase();if(TYPE_ALIAS[l])return TYPE_ALIAS[l];return DTYPES.find(x=>x.toLowerCase()===l)||""}
+const GEAR_LABEL={head:"Head",torso:"Torso",arms:"Arms",hands:"Hands",legs:"Legs",feet:"Feet",acc:"Accessories"};
+const BUFF_KEY=w=>{w=w.toLowerCase().replace(/\s+/g," ");if(/^str/.test(w))return "STR";if(/^int/.test(w))return "INT";if(/^con/.test(w))return "CON";if(/^dex/.test(w))return "DEX";if(/^cha/.test(w))return "CHA";
+  if(w==="dr"||/^damage res/.test(w))return "dr";if(/^evade/.test(w))return "evade";if(/^(move|movement|speed)/.test(w))return "move";return ""};
+const BUFF_WORDS="Str(?:ength)?|Int(?:elligence)?|Con(?:stitution)?|Dex(?:terity)?|Cha(?:risma)?|DR|Damage Resistance|Evade|Move(?:ment)?|Speed";
+const TYPE_WORDS=DTYPES.join("|")+"|Cold|Frost|Lightning|Thunder|Radiant";
+function gearBuffs(c){const o={stat:{STR:0,INT:0,CON:0,DEX:0,CHA:0},dr:0,evade:0,move:0,res:new Set(),imm:new Set(),vul:new Set(),src:[]};
+  const srcs=[...Object.entries(c.gear||{}).map(([k,v])=>[GEAR_LABEL[k]||k,v]),...(c.ext||[]).map(v=>["External Buff",v])];
+  srcs.forEach(([slot,txt])=>{let t=String(txt||"");if(!t.trim())return;const hit=[];
+    const add=(sign,n,w)=>{const k=BUFF_KEY(w),v=(sign==="-"||sign==="−"?-1:1)*(+n||0);if(!k||!v)return;if(o.stat[k]!=null)o.stat[k]+=v;else o[k]+=v;hit.push(`${v>0?"+":""}${v} ${k.length===3?k:k==="dr"?"DR":k[0].toUpperCase()+k.slice(1)}`)};
+    t=t.replace(new RegExp(`([+\\-−])\\s?(\\d+)\\s*(?:to\\s+)?(?:your\\s+)?(${BUFF_WORDS})\\b`,"gi"),(m,sg,n,w)=>{add(sg,n,w);return " "});
+    t.replace(new RegExp(`\\b(${BUFF_WORDS})\\s*([+\\-−])\\s?(\\d+)`,"gi"),(m,w,sg,n)=>{add(sg,n,w);return " "});
+    const kind=w=>/^res/i.test(w)?"res":/^imm/i.test(w)?"imm":"vul";
+    String(txt).replace(new RegExp(`\\b(${TYPE_WORDS})\\s+(Resistance|Resistant|Immunity|Immune|Vulnerability|Vulnerable)\\b`,"gi"),(m,ty,w)=>{const T=normType(ty);if(T){o[kind(w)].add(T);hit.push(`${T} ${kind(w)==="res"?"Resistance":kind(w)==="imm"?"Immunity":"Vulnerability"}`)}return m});
+    String(txt).replace(new RegExp(`\\b(Resist(?:ance|ant)?|Immun(?:e|ity)|Vulnerab(?:le|ility))\\s+(?:to\\s+)?(${TYPE_WORDS})\\b`,"gi"),(m,w,ty)=>{const T=normType(ty);if(T&&!o[kind(w)].has(T)){o[kind(w)].add(T);hit.push(`${T} ${kind(w)==="res"?"Resistance":kind(w)==="imm"?"Immunity":"Vulnerability"}`)}return m});
+    if(hit.length)o.src.push({slot,what:String(txt).split(/\n/)[0].slice(0,60),fx:hit})});
+  return o}
+function gearLine(c,k){const g=k.gb;if(!g||!g.src.length)return "";
+  return `<div class="ddb-cond gearline"><small>From gear & buffs</small> ${g.src.map(s=>`<span class="gtag" title="${esc(s.slot)}: ${esc(s.what)}">${esc(s.fx.join(", "))}</span>`).join("")}</div>`}
+
+/* ===================== DAMAGE (Rules for Survival p.42) ===================== */
+function applyDamage(c,amount,type){const k=sheetCalc(c),T=normType(type),per=Math.max(1,num(k.hbVal)||1),steps=[];let d=Math.max(0,Math.round(+amount||0));
+  steps.push(`${d}${T?" "+T:""} damage`);
+  const dr=num(k.dr);if(dr&&d){d=Math.max(0,d-dr);steps.push(`−${dr} DR = ${d}`)}
+  if(T&&k.gb.imm.has(T)){if(d)steps.push(`Immune to ${T}: 0`);d=0}
+  else{if(T&&k.gb.res.has(T)&&d){d=Math.floor(d/2);steps.push(`${T} Resistance halves it: ${d}`)}if(T&&k.gb.vul.has(T)&&d){d*=2;steps.push(`Vulnerable to ${T}: ${d}`)}}
+  const before=k.left,slots=Math.min(before,Math.floor(d/per));if(d>0&&d<per)steps.push(`less than one slot (${per}), so no Health lost`);
+  let left=slots;for(let i=k.slots-1;i>=0&&left>0;i--)if(!c.hbLost[i]){c.hbLost[i]=true;left--}
+  const dying=c.kind==="crawler"&&before>0&&before-slots<=0;if(dying&&!/Dying/.test(c.debuffs||""))c.debuffs=[c.debuffs,"Dying"].filter(Boolean).join("; ");
+  return {final:d,slots,steps,dying,left:before-slots,per}}
+
+/* ===================== COMBAT TAB ===================== */
+function cbState(){return S.cb=S.cb||{kind:"mob",src:"",atk:"0",aoe:false,trap:"",trapName:"",dmgExpr:"",dmgType:"",check:"evade",stat:"DEX",dc:"",onSave:"none",dmgMode:"roll",dmgVal:"",debuff:"",tg:{},log:[]}}
+function cbSources(f){const out=[];
+  (f.mobs||[]).forEach(m=>{const c=mobCalc(m);out.push({key:"m:"+m.id,grp:`Mob Forge · Floor ${f.number}`,name:m.name||"Unnamed",boss:m.kind==="Boss",img:m.img,
+    atks:c.attacks.map(a=>({name:a.name||"Attack",dmg:a.dmg,type:normType(a.type),dc:(+a.toHit||10)+(+c.Fl||0),aoe:!!a.area,fx:a.effect||""}))})});
+  Object.values(S.sheets).filter(x=>x.kind==="creature").forEach(x=>{const k=sheetCalc(x),fl=num(x.floor)||+f.number||1;
+    out.push({key:"s:"+x.id,grp:"Creature sheets",name:x.name,boss:/Boss/i.test(x.cls||""),img:x.portrait,
+      atks:x.attacks.map((a,i)=>({a,kk:k.atk[i]})).filter(o=>o.a.name).map(({a,kk})=>({name:a.name,dmg:kk.dmg||a.dice,type:normType((String(a.effects||"").match(new RegExp(TYPE_WORDS,"i"))||[""])[0]),
+        dc:/\+F/i.test(a.hitTxt||"")?num(String(a.hitTxt).split("+")[0])+fl:a.hitTxt?num(a.hitTxt):10+num(a.rank)+(k.mods[a.stat]||0),aoe:/\barea\b/i.test(a.effects||""),fx:String(a.effects||"")}))})});
+  return out.filter(s=>s.atks.length)}
+function cbTraps(f){const out=[];(f.neighborhoods||[]).forEach(n=>(n.traps||[]).forEach((t,i)=>{if(t&&String(t.name||"").trim())out.push({key:`${n.id}:${i}`,name:t.name,nb:n.name,effect:t.effect||"",detect:t.detect||""})}));return out}
+function cbEvMod(c,k){return k.mods.DEX+num(c.evadeBuffs)+(k.gb?.evade||0)}
+function vCombat(f){const C=cbState(),srcs=cbSources(f),traps=cbTraps(f),crawlers=Object.values(S.sheets).filter(x=>x.kind==="crawler").sort((a,b)=>String(a.name).localeCompare(b.name));
+  if(C.kind==="mob"&&!srcs.find(s=>s.key===C.src))C.src=srcs[0]?.key||"";
+  const src=srcs.find(s=>s.key===C.src),atk=src?.atks[+C.atk]||src?.atks[0];
+  const grp={};srcs.forEach(s=>(grp[s.grp]=grp[s.grp]||[]).push(s));
+  let how="";
+  if(C.kind==="mob"){
+    how=srcs.length?`<div class="grid g2"><label class="f"><span>Monster</span><select data-cb="src">${Object.entries(grp).map(([g,l])=>`<optgroup label="${esc(g)}">${l.map(s=>`<option value="${s.key}" ${s.key===C.src?"selected":""}>${s.boss?"👑 ":""}${esc(s.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>
+      <label class="f"><span>Attack</span><select data-cb="atk">${(src?.atks||[]).map((a,i)=>`<option value="${i}" ${String(i)===String(C.atk)?"selected":""}>${esc(a.name)} · ${esc(a.dmg)}</option>`).join("")}</select></label></div>
+      ${atk?`<div class="cbsum"><b>${esc(atk.dmg)}</b>${atk.type?` <span class="dtype">${esc(atk.type)}</span>`:""} · Evade Difficulty <b>${atk.dc}</b>${atk.aoe?" · <span class=\"dtype\">Area</span> (Evade halves)":""}${atk.fx?`<div class="dim" style="font-size:12px;margin-top:4px">${esc(atk.fx)}</div>`:""}</div>`:""}
+      <label class="cbchk"><input type="checkbox" data-cb="aoe" ${C.aoe?"checked":""}> Treat as an Area attack (a successful Evade halves the damage)</label>`
+     :`<p class="muted">No monsters yet. Add some in the <b>Mob Forge</b> or make a creature sheet.</p>`}
+  else{const tr=traps.find(t=>t.key===C.trap);
+    how=`<div class="grid g2"><label class="f"><span>Trap</span><select data-cb="trap"><option value="">Custom trap</option>${traps.map(t=>`<option value="${t.key}" ${t.key===C.trap?"selected":""}>${esc(t.name)} (${esc(t.nb)})</option>`).join("")}</select></label>
+      ${C.trap?`<div class="cbsum" style="margin:0">${esc(tr?.effect||"No effect text")}</div>`:`<label class="f"><span>Trap name</span><input type="text" data-cb="trapName" value="${esc(C.trapName)}" placeholder="Pressure-plate flamethrower"></label>`}</div>
+     <div class="grid g3" style="margin-top:8px"><label class="f"><span>Damage</span><input type="text" data-cb="dmgExpr" value="${esc(C.dmgExpr)}" placeholder="${f.number}d6"></label>
+      <label class="f"><span>Type</span><select data-cb="dmgType"><option value="">Untyped</option>${DTYPES.map(t=>`<option ${C.dmgType===t?"selected":""}>${t}</option>`).join("")}</select></label>
+      <label class="f"><span>Avoid with</span><select data-cb="check"><option value="evade" ${C.check==="evade"?"selected":""}>Evade</option>${STATS.map(s=>`<option value="${s}" ${C.check===s?"selected":""}>${STAT_NAME[s]} check</option>`).join("")}<option value="none" ${C.check==="none"?"selected":""}>Can't avoid</option></select></label></div>
+     ${C.check!=="none"?`<div class="grid g2" style="margin-top:8px"><label class="f"><span>Difficulty</span><input type="number" data-cb="dc" value="${esc(C.dc)}" placeholder="${10+(+f.number||0)}"></label>
+      <label class="f"><span>If they succeed</span><select data-cb="onSave"><option value="none" ${C.onSave==="none"?"selected":""}>No damage</option><option value="half" ${C.onSave==="half"?"selected":""}>Half damage</option></select></label></div>`:""}
+     <p class="dim" style="font-size:12px;margin:6px 0 0">Book default: Floor ${f.number} traps deal ${f.number}d6. Difficulty defaults to 10 + Floor.</p>`}
+  const rows=crawlers.map(c=>{const k=sheetCalc(c),T=C.tg[c.id]||{},on=!!T.on,mode=T.mode||"auto",chk=C.kind==="mob"?"evade":C.check;
+    const res=[...k.gb.res].map(t=>`<span class="dtype">${t} Res.</span>`).concat([...k.gb.imm].map(t=>`<span class="dtype">${t} Immune</span>`)).join("");
+    return `<div class="cbt ${on?"on":""}"><label class="cbt-who"><input type="checkbox" data-cb="tg.${c.id}.on" ${on?"checked":""}><span class="cbt-av">${c.portrait?`<img src="${esc(c.portrait)}" alt="">`:esc(String(c.name||"?")[0])}</span>
+       <span><b>${esc(c.name)}</b><i class="mono">${k.left}/${k.slots} HB × ${k.hbVal} · DR ${esc(k.dr)} · Evade ${sgn(cbEvMod(c,k))}</i>${res?`<span class="row" style="gap:4px;margin-top:3px">${res}</span>`:""}</span></label>
+      ${on&&chk!=="none"?`<div class="cbt-ev"><select data-cb="tg.${c.id}.mode" aria-label="${chk==="evade"?"Evade":"Check"} for ${esc(c.name)}">${chk==="evade"?`<option value="none" ${mode==="none"?"selected":""}>Not evading</option>`:""}<option value="auto" ${mode==="auto"?"selected":""}>Roll ${chk==="evade"?"Evade":STAT_NAME[chk]} for them</option><option value="manual" ${mode==="manual"?"selected":""}>They rolled…</option></select>
+        ${mode==="manual"?`<input type="number" data-cb="tg.${c.id}.roll" value="${esc(T.roll||"")}" placeholder="Total" aria-label="${esc(c.name)}'s roll total">`:""}</div>`:""}</div>`}).join("");
+  const log=C.log.map(L=>`<div class="cblog"><header><b>${esc(L.title)}</b><span class="dim mono">${esc(L.roll)}</span>${L.undone?`<em class="dim">Undone</em>`:`<button class="btn xs ghost" data-act="cbUndo" data-k="${L.id}">Undo</button>`}</header>
+     ${L.rows.map(r=>`<div class="cblr ${r.slots?"hurt":"safe"}"><b>${esc(r.name)}</b> ${r.slots?`<span class="neg">−${r.slots} HB</span>`:`<span class="pos">No Health lost</span>`}${r.dying?` <span class="neg">DYING</span>`:""}<div class="dim" style="font-size:12px">${esc([r.outcome,...r.steps].filter(Boolean).join(" · "))}</div></div>`).join("")}</div>`).join("");
+  return `<section class="panel"><header><h2>Combat</h2><span class="muted" style="font-size:13px">${S.live?.role==="gm"?"Hits land on your players' phones instantly":"Damage goes straight onto the sheets"}</span></header>
+    <div class="seg" role="group" aria-label="What's happening"><button data-act="cbKind" data-k="mob" aria-pressed="${C.kind==="mob"}">⚔ Monster attacks</button><button data-act="cbKind" data-k="trap" aria-pressed="${C.kind==="trap"}">⚠ Trap springs</button></div>
+    ${how}
+    <div class="grid g2" style="margin-top:10px"><label class="f"><span>Damage roll</span><select data-cb="dmgMode"><option value="roll" ${C.dmgMode==="roll"?"selected":""}>Roll it for me</option><option value="manual" ${C.dmgMode==="manual"?"selected":""}>I rolled…</option></select></label>
+      ${C.dmgMode==="manual"?`<label class="f"><span>Damage total</span><input type="number" data-cb="dmgVal" value="${esc(C.dmgVal)}" placeholder="14"></label>`:`<label class="f"><span>Debuff on a hit (optional)</span><input type="text" data-cb="debuff" value="${esc(C.debuff)}" placeholder="Burned, Poisoned…"></label>`}</div>
+    ${C.dmgMode==="manual"?`<label class="f" style="margin-top:8px"><span>Debuff on a hit (optional)</span><input type="text" data-cb="debuff" value="${esc(C.debuff)}" placeholder="Burned, Poisoned…"></label>`:""}
+   </section>
+   <section class="panel"><header><h2>Who's in the way?</h2><span class="muted" style="font-size:13px">Tap one or more crawlers</span></header>
+    ${crawlers.length?`<div class="cbts">${rows}</div>`:`<p class="muted">No crawlers yet. Make them on the <b>Sheets</b> tab.</p>`}
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn gold big" data-act="cbGo">${C.kind==="mob"?"⚔ Resolve attack":"⚠ Spring the trap"}</button></div>
+    <p class="dim" style="font-size:12px;margin:8px 0 0">Rules for Survival p.42: DR comes off first, then Resistance (half), Vulnerability (double) and Immunity. Each slot of damage equal to the crawler's Con Mod removes one Health Bar slot; leftovers are ignored. Gear bonuses on each sheet count automatically.</p>
+   </section>
+   ${log?`<section class="panel"><header><h2>What happened</h2></header>${log}</section>`:""}`}
+function cbInput(t,commit){const C=cbState(),key=t.dataset.cb;let v=t.type==="checkbox"?t.checked:t.value;
+  if(key.startsWith("tg.")){const [,id,fld]=key.split(".");C.tg[id]=C.tg[id]||{mode:"auto"};C.tg[id][fld]=v}else C[key]=v;
+  if(key==="src")C.atk="0";
+  if(key==="trap"){const tr=cbTraps(F()).find(x=>x.key===v);if(tr){const e=tr.effect||"";C.dmgExpr=(e.match(/\d+d\d+(?:\s*[+-]\s*\d+)?/i)||[""])[0].replace(/\s+/g,"");C.dmgType=normType((e.match(new RegExp(TYPE_WORDS,"i"))||[""])[0])}}
+  if(commit&&(t.tagName==="SELECT"||t.type==="checkbox"))keepFocus(renderMain)}
+function cbResolve(){const C=cbState(),f=F();let A;
+  if(C.kind==="mob"){const src=cbSources(f).find(s=>s.key===C.src),a=src?.atks[+C.atk]||src?.atks[0];if(!a){toast("Pick a monster and an attack");return}
+    const aoe=C.aoe||a.aoe;A={title:`${src.name}: ${a.name}`,who:src.name,what:a.name,expr:a.dmg,type:a.type,check:"evade",dc:a.dc,onSave:aoe?"half":"none",aoe,voice:src.boss?"boss":"monster",major:true}}
+  else{const tr=cbTraps(f).find(x=>x.key===C.trap);const nm=tr?.name||C.trapName||"Trap";A={title:`Trap: ${nm}`,who:nm,what:"",expr:C.dmgExpr||`${f.number}d6`,type:C.dmgType,check:C.check,dc:num(C.dc)||10+(+f.number||0),onSave:C.onSave,voice:"system",major:false}}
+  const ids=Object.entries(C.tg).filter(([id,T])=>T.on&&S.sheets[id]).map(([id])=>id);if(!ids.length){toast("Tap at least one crawler");return}
+  let total,rollTxt;if(C.dmgMode==="manual"){if(C.dmgVal===""){toast("Enter the damage total");return}total=num(C.dmgVal);rollTxt=`${total} damage`}else{const r=rollExpr(A.expr);total=r.total;rollTxt=`${A.expr}: ${r.parts.join(" ").replace(/^\+/,"")} = ${total}`}
+  const L={id:uid(),title:A.title,roll:rollTxt,rows:[],undo:{}};
+  ids.forEach(id=>{const c=S.sheets[id],k=sheetCalc(c),T=C.tg[id],mode=T.mode||"auto";let dmg=total,outcome="";
+    if(A.check!=="none"&&!(A.check==="evade"&&mode==="none")){let tot,nat=null;
+      if(mode==="manual"){if(T.roll===""||T.roll==null){outcome="No roll entered, so it hits";tot=null}else tot=num(T.roll)}
+      else{const mod=A.check==="evade"?cbEvMod(c,k):(k.mods[A.check]||0);const r=rollExpr(`d20${sgn(mod)}`);tot=r.total;nat=r.nat}
+      if(tot!=null){const ok=nat!==1&&tot>=A.dc,lbl=A.check==="evade"?"Evade":STAT_NAME[A.check];
+        if(ok){dmg=A.onSave==="half"?Math.floor(dmg/2):0;outcome=`${lbl} ${tot} vs ${A.dc}: success${A.onSave==="half"?", half damage":""}`}
+        else{outcome=`${lbl} ${tot} vs ${A.dc}: ${nat===1?"Natural 1":"failed"}`;if(A.major&&A.check==="evade"&&(nat===1||A.dc-tot>=10)){dmg+=+f.number||0;outcome+=`, Major Fail +${f.number} damage`}}}}
+    else if(A.check==="evade")outcome="Didn't evade";
+    L.undo[id]={hbLost:c.hbLost.slice(),debuffs:c.debuffs||""};
+    const R=dmg>0?applyDamage(c,dmg,A.type):{final:0,slots:0,steps:[],dying:false,left:k.left};
+    if(R.slots>0&&C.debuff.trim()&&!String(c.debuffs||"").includes(C.debuff.trim()))c.debuffs=[c.debuffs,C.debuff.trim()].filter(Boolean).join("; ");
+    saveSheet(id);L.rows.push({name:c.name,slots:R.slots,dying:R.dying,outcome,steps:R.steps});
+    const say=`${A.who}${A.what?` uses ${A.what}`:""}${C.kind==="trap"?" springs":""}! ${outcome?outcome+". ":""}${R.steps.length?R.steps.join(", ")+". ":"No damage. "}${R.slots?`You lose ${R.slots} Health Bar slot${R.slots>1?"s":""}.`:"You keep all your Health."}${R.slots&&C.debuff.trim()?` You gain the ${C.debuff.trim()} Debuff.`:""}${R.dying?" You are DYING. Get healed to 10% or you die.":""}`;
+    livePushEvent({type:"hit",title:A.title,text:say,voice:A.voice,targets:[id],slots:R.slots,dying:R.dying})});
+  C.log.unshift(L);C.log=C.log.slice(0,12);renderMain();
+  const hurt=L.rows.filter(r=>r.slots).length;toast(hurt?`${hurt} crawler${hurt>1?"s":""} hurt${S.live?.role==="gm"?" · sent to their phones":""}`:"Nobody lost Health")}
+function cbUndo(id){const C=cbState(),L=C.log.find(x=>x.id===id);if(!L||L.undone)return;Object.entries(L.undo).forEach(([cid,u])=>{const c=S.sheets[cid];if(!c)return;c.hbLost=u.hbLost.slice();c.debuffs=u.debuffs;saveSheet(cid)});
+  L.undone=true;renderMain();toast("Undone")}
+function combatAct(a,el){switch(a){
+  case "cbKind":cbState().kind=el.dataset.k;renderMain();return;
+  case "cbGo":cbResolve();return;
+  case "cbUndo":cbUndo(el.dataset.k);return;
+  case "moodOpen":S.pop={mode:"mood",title:"How is the System AI feeling?"};renderPop();return;
+  case "moodSet":setMood(el.dataset.k);S.pop=null;renderPop();return;
+  case "moodRoll":{const r=1+Math.floor(Math.random()*6),k=Object.keys(MOODS).find(x=>MOODS[x].n===r);setMood(k);S.pop=null;renderPop();return}
+  case "moodInfo":{const M=MOODS[S.mood];if(M)toast(`${M.emoji} ${M.line}`);return}}}
+
 const LIBRARY={home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
 /* ===================== GENERATOR TABLES (original) ===================== */
 const R=a=>a[Math.floor(Math.random()*a.length)];
