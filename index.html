@@ -1003,12 +1003,17 @@ function lichPanel(f){
    <p class="tip" style="margin-bottom:12px">${lib.tip} Everything scales to Floor ${F}.</p>
    <div class="row" style="margin-bottom:12px"><label class="f" style="width:220px"><span>Boss tier</span><select id="lichTier"><option value="" ${!tier?"selected":""}>Suggested tier</option>${Object.keys(BOSS_TIERS).map(t=>`<option ${t===tier?"selected":""}>${t}</option>`).join("")}</select></label>
     <span class="muted" style="font-size:13px">${tierNote}</span></div>
-   <div class="grid g3">${lib.items.map((L,i)=>`<div class="card" style="padding:12px;display:grid;gap:6px;align-content:start">
+   ${set==="uploads"&&!UPLOADS.length?`<div class="livebox"><b>Load your monster pack</b><p class="dim" style="font-size:13px;margin:6px 0">Pick the <b>monster-pack.json</b> file once. It's saved privately in your room, so every device you sign in on has it.</p><label class="btn gold" style="cursor:pointer">Load monster pack<input type="file" accept="application/json,.json" id="packFile" hidden></label></div>`:""}
+   ${lib.items.length>24?(()=>{const fams=[...new Set(lib.items.map(L=>L.origin))].sort();return `<div class="row" style="gap:8px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
+     <label class="f" style="flex:1 1 200px"><span>Search</span><input type="search" id="libQ" value="${esc(S.libQ||"")}" placeholder="dragon, undead, swarm…"></label>
+     <label class="f" style="flex:0 1 140px"><span>Show</span><select id="libKind"><option value="">Mobs & Bosses</option><option value="Mob" ${S.libKind==="Mob"?"selected":""}>Mobs only</option><option value="Boss" ${S.libKind==="Boss"?"selected":""}>Bosses only</option></select></label>
+     <label class="f" style="flex:1 1 200px"><span>Family</span><select id="libFam"><option value="">All (${fams.length})</option>${fams.map(x=>`<option ${S.libFam===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label></div>`})():""}
+   ${(()=>{const shown=libFilter(lib,set),lim=S.libLim||30;return `<p class="dim" style="font-size:12px;margin:0 0 8px">${shown.length} match${shown.length===1?"":"es"}</p><div class="grid g3" id="libGrid">${shown.slice(0,lim).map(([L,i])=>`<div class="card" style="padding:12px;display:grid;gap:6px;align-content:start">
      <div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="font-size:15px">${esc(L.name)}</h3><span class="dim mono" style="font-size:11px;white-space:nowrap">${L.kind==="Mob"?`Mob · ${L.lv}`:esc(L.tier||"")}${L.page?" · p."+L.page:""}</span></div>
      ${L.book?`<span class="dim" style="font-size:11px">${esc(L.book)}</span>`:""}
-     <span class="eyebrow">${esc(L.origin)}${set==="lich"?" lich":""}</span><p style="margin:0;font-size:13.5px" class="muted">${esc(L.concept)}</p>
+     <span class="eyebrow">${esc(L.origin)}${set==="lich"?" lich":""}${L.cr!=null?` · 5e CR ${L.cr<1?"½":L.cr}`:""}</span><p style="margin:0;font-size:13.5px" class="muted">${esc(L.concept)}</p>
      ${L.traits?`<p style="margin:0;font-size:12px" class="dim">${L.traits.length} traits · ${L.attacks.length} attacks</p>`:""}
-     <div><button class="btn sm gold" data-act="lichUse" data-set="${set}" data-k="${i}">Forge this ${L.kind==="Mob"?"Mob":"Boss"}</button></div></div>`).join("")}</div></section>`;
+     <div><button class="btn sm gold" data-act="lichUse" data-set="${set}" data-k="${i}">Forge this ${L.kind==="Mob"?"Mob":"Boss"}</button></div></div>`).join("")}</div>${shown.length>lim?`<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-act="libMore">Show more (${shown.length-lim} left)</button></div>`:""}`})()}</section>`;
 }
 /* ===================== VIEW: ENCOUNTERS ===================== */
 function vEnc(f){
@@ -1091,7 +1096,7 @@ function sheetText(f){
 
 /* ===================== EVENTS ===================== */
 document.addEventListener("input",e=>{
-  const t=e.target;if(t.dataset&&t.dataset.cb!=null){cbInput(t,false);return}if(t.id==="importFile"||t.id==="sheetImport"||t.id==="sheetPdfPick"||t.id==="restoreFile"||t.id==="loadCode"||t.id==="shareCode"||t.id==="annText")return;
+  const t=e.target;if(t.dataset&&t.dataset.cb!=null){cbInput(t,false);return}if(t.id==="libQ"){S.libQ=t.value;S.libLim=30;clearTimeout(S._lq);S._lq=setTimeout(()=>keepFocus(renderMain),250);return}if(t.id==="importFile"||t.id==="sheetImport"||t.id==="sheetPdfPick"||t.id==="restoreFile"||t.id==="loadCode"||t.id==="shareCode"||t.id==="annText"||t.id==="packFile")return;
   if(t.dataset.wz&&S.wiz){let v=t.value;if("num" in t.dataset)v=+v||1;setPath(S.wiz,t.dataset.wz,v);
     if("wzr" in t.dataset){clearTimeout(S._wzT);S._wzT=setTimeout(()=>keepFocus(renderMain),400);return}
     const nm=document.querySelector(".wzname");if(nm)nm.textContent=S.wiz.name||"New Crawler";const pt=document.querySelector(".wzport");if(pt)pt.innerHTML=wzPortrait(S.wiz,Object.fromEntries(STATS.map(s=>[s,statMod(S.wiz.stats[s])])));
@@ -1114,6 +1119,8 @@ document.addEventListener("change",e=>{
   if(t.id==="importFile"){importFile(t.files[0]);return}
   if(t.dataset.img&&t.type==="file"){handleImage(t);return}
   if(t.id==="autoSpeak"){setSound(t.checked);if(t.checked)speakAs("System messages will be read aloud.","system");return}
+  if(t.id==="packFile"){const f0=t.files[0];t.value="";if(f0)loadPackFile(f0);return}
+  if(t.id==="libKind"||t.id==="libFam"){S[t.id]=t.value;S.libLim=30;renderMain();return}
   if(t.id==="restoreFile"){const f0=t.files[0];t.value="";if(f0)restoreBackup(f0);return}
   if(t.id==="genFlavor"){S.gen.flavor=t.value;return}
   if(t.id==="genTarget"){S.gen.target=t.value;return}
@@ -1317,7 +1324,8 @@ document.addEventListener("click",async e=>{
    case "lootAdd":{const L=lootState(),it=el.dataset.from==="roll"?L.res[+el.dataset.i]:ITEMS.items[+el.dataset.i];if(!it)return;const w=lootAdd(f,it);
      if(el.dataset.from==="roll")L.res.splice(+el.dataset.i,1);toast(`${it.n} added${w?" to "+w:" to Floor "+f.number+" loot"}`);break}
    case "lootAddAll":{const L=lootState();const n=L.res.length;let w="";L.res.forEach(it=>w=lootAdd(f,it));L.res=[];toast(`${n} items added${w?" to "+w:""}`);break}
-   case "libSet":S.libSet=el.dataset.k;renderMain();return;
+   case "libSet":S.libSet=el.dataset.k;S.libQ="";S.libFam="";S.libKind="";S.libLim=30;renderMain();return;
+   case "libMore":S.libLim=(S.libLim||30)+30;renderMain();return;
    case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,S.lichTier||L.tier||"City",+f.number||3);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
    case "genType":S.gen.type=el.dataset.k;S.gen.res=null;S.gen.locks={};S.gen.full=null;S.gen.err="";renderMain();return;
    case "genRoll":{const g=S.gen,F=+f.number||3,fresh=rollAll(g.type,F,genFlavor(f));
@@ -2579,7 +2587,7 @@ async function liveGmBoot(){let fb;try{fb=await fbLoad()}catch(e){liveGate("erro
     if(meta&&meta.gmUid!==u.uid){liveGate("notyours",room);return null}
     if(!meta)await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
   else{room=roomCode();await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
-  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();liveWatchMood();
+  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();liveWatchMood();liveLoadPack();
   const base=c=>c==="floors"?livePath("gm/floors"):livePath("chars");
   return {collection:c=>({onSnapshot(cb,err){return D.onValue(D.ref(db,base(c)),snap=>{const v=snap.val()||{};
         cb({docs:Object.entries(v).filter(([,d])=>c==="floors"||d&&d.sheet).map(([id,d])=>({id,exists:true,data:()=>c==="floors"?d:{...d.sheet,id,__owner:!!d.ownerUid}}))})},e=>err&&err(e))},
@@ -2931,7 +2939,24 @@ function barrowBanner(f){if(!BARROW_PACK.match(f)||(f.packs||[]).includes(BARROW
    <p class="dim" style="font-size:12px;margin:6px 0 10px">Only adds. Nothing you wrote is deleted; new text goes under what's there.</p>
    <div class="row" style="gap:8px"><button class="btn gold" data-act="packApply">Add it to Floor ${esc(f.number)}</button><button class="btn ghost" data-act="packHide">Not now</button></div></section>`}
 
-const LIBRARY={barrow:{label:"Barrow Command",items:BARROW_LIB,tip:"Norse draugr and barrow-wights: a sentient Field Officer that commands mindless Thralls, Life Drain, and Barrow Blight (agricultural warfare). Built for this game's rules."},home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
+
+/* ===================== YOUR UPLOADS: converted monster pack ===================== */
+const UPLOADS=[];const UPLOAD_ITEMS=[];
+const PACK_EMBED=/*PACK*/null/*/PACK*/;
+function applyPack(p){if(!p||p.kind!=="floor-builder-pack")return 0;UPLOADS.length=0;(p.monsters||[]).forEach(m=>UPLOADS.push(m));
+  let si=ITEMS.src.indexOf("Your uploads (converted)");if(si<0){ITEMS.src.push("Your uploads (converted)");si=ITEMS.src.length-1}
+  ITEMS.items=ITEMS.items.filter(x=>x.src!==si);(p.items||[]).forEach(x=>ITEMS.items.push({n:x.n,s:x.s,b:x.b,src:si,p:0,fx:x.fx+(x.from?` (From the ${x.from}.)`:"")}));
+  S.packLoaded=true;return UPLOADS.length}
+if(PACK_EMBED)applyPack(PACK_EMBED);
+async function loadPackFile(file){let p;try{p=JSON.parse(await file.text())}catch(_){toast("That file isn't a monster pack");return}
+  const n=applyPack(p);if(!n){toast("That file isn't a monster pack");return}
+  if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;try{await D.set(D.ref(db,livePath("gm/pack")),fbClean(p));toast(`${n} monsters loaded and saved to your room`)}catch(_){toast(`${n} monsters loaded on this device only`)}}
+  else toast(`${n} monsters loaded`);S.libSet="uploads";renderMain()}
+async function liveLoadPack(){if(!S.fb||S.live?.role!=="gm"||PACK_EMBED)return;const {D,db}=S.fb;try{const v=(await D.get(D.ref(db,livePath("gm/pack")))).val();if(v){applyPack(v);if(S.tab==="mobs"||S.tab==="loot")renderMain()}}catch(_){}}
+function libFilter(lib,set){const q=(S.libQ||"").trim().toLowerCase(),k=S.libKind||"",fam=S.libFam||"";
+  return lib.items.map((L,i)=>[L,i]).filter(([L])=>(!q||(L.name+" "+L.origin+" "+L.type+" "+(L.concept||"")).toLowerCase().includes(q))&&(!k||(k==="Mob"?L.kind==="Mob":L.kind!=="Mob"))&&(!fam||L.origin===fam))}
+
+const LIBRARY={uploads:{label:"Your uploads",items:UPLOADS,tip:"Everything you uploaded (Dungeon Dad, homebrew pages and more), converted to this game's rules. Big monsters are Bosses, small ones are Mobs; special rules are kept as traits. Check the traits and tweak in the Forge after you add one."},barrow:{label:"Barrow Command",items:BARROW_LIB,tip:"Norse draugr and barrow-wights: a sentient Field Officer that commands mindless Thralls, Life Drain, and Barrow Blight (agricultural warfare). Built for this game's rules."},home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
 /* ===================== GENERATOR TABLES (original) ===================== */
 const R=a=>a[Math.floor(Math.random()*a.length)];
 const RN=(a,n)=>{const c=a.slice(),o=[];while(o.length<n&&c.length)o.push(c.splice(Math.floor(Math.random()*c.length),1)[0]);return o};
