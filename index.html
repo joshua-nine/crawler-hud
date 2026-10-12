@@ -580,9 +580,10 @@ function renderNewFloor(){
 function renderMain(){
   const m=$("#main");document.body.classList.toggle("player",!!S.player);
   if(S.player){m.innerHTML=S.rc?vRaceClass():vPlayer();renderPop();return}
+  if(!F()&&Object.keys(S.floors).length){S.cur=Object.keys(S.floors).sort((x,y)=>S.floors[x].number-S.floors[y].number)[0];renderShell()}
   const f=F();
   if(S.rc&&S.tab==="sheets"){m.innerHTML=vRaceClass();renderPop();return}
-  if(!f){m.innerHTML=`<div class="panel empty"><h2 style="margin-bottom:8px">No floors yet</h2><p>Start with <b>+ New floor</b>. Pick a floor number and the rules math fills itself in.</p></div>`;return}
+  if(!f){m.innerHTML=`<div class="panel empty"><h2 style="margin-bottom:8px">No floors yet</h2><p>Start with <b>+ New floor</b>. Pick a floor number and the rules math fills itself in.</p><p style="margin-top:12px">Have a backup file? <label class="btn sm" style="cursor:pointer">Restore backup<input type="file" accept="application/json,.json" id="restoreFile" hidden></label></p></div>`;renderPop();return}
   m.innerHTML=({overview:vOverview,gen:vGen,nb:vNbs,quests:vQuests,mobs:vMobs,loot:vLoot,sheets:vSheets,enc:vEnc,sheet:vSheet}[S.tab]||vOverview)(f);
   if(S.tab==="mobs")updateMobDerived();
   renderPop();
@@ -1095,6 +1096,7 @@ function keepFocus(fn){const a=document.activeElement,p=a?.dataset?.p,sel=a&&"se
 document.addEventListener("click",async e=>{
   const tabB=e.target.closest("[data-tab]");if(tabB){S.tab=tabB.dataset.tab;S.confirm=null;renderShell();renderMain();return}
   const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,f=F();
+  if(a==="liveSignOut"){(async()=>{try{await S.fb.Au.signOut(S.fb.auth)}catch(_){}lsSet("dcc.gmDevice",false);lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString()})();return}
   if(a==="liveGoogle"){liveGoogle();return}if(a==="liveLink"){liveLinkGoogle();return}if(a==="liveDevice"){liveDeviceOnly();return}if(a==="liveNewRoom"){lsSet("dcc.gmRoom","");const u=new URL(location.href);u.searchParams.delete("room");location.href=u.toString();return}if(a==="cloudRetry"){location.reload();return}
   if(el.tagName==="BUTTON"&&el.closest(".head")&&a!=="toggleCard")e.stopPropagation();
   switch(a){
@@ -1106,7 +1108,7 @@ document.addEventListener("click",async e=>{
    case "createFloor":{const n=Math.max(1,+$("#nf_num").value||1);const fl=blankFloor(n);const nm=$("#nf_name").value.trim();if(nm)fl.name=nm;
      S.floors[fl.id]=fl;S.cur=fl.id;S.newFloor=false;S.tab="overview";renderAll();scheduleSave(fl.id);toast(`Floor ${n} created`);return}
   }
-  if(!f&&!S.player)return;
+  if(!f&&!S.player&&!["localUpload","localDismiss","driveBackup","liveSignOut","liveLink","speak"].includes(a))return;
   switch(a){
    case "toggleCard":{if(e.target.closest("button")&&e.target.closest("button")!==el)return;S.open[el.dataset.key]=!S.open[el.dataset.key];renderMain();return}
    case "clock":f.clockHours=Math.max(0,Math.min((+f.collapseDays||0)*24,(+f.clockHours||0)+(+el.dataset.v)));break;
@@ -2505,6 +2507,7 @@ async function fbLoad(){if(S.fb)return S.fb;const b=window.FB_BASE||`https://www
   const [A,Au,D]=await Promise.all([import(b+"firebase-app.js"),import(b+"firebase-auth.js"),import(b+"firebase-database.js")]);
   const app=A.initializeApp(LIVE.cfg);let auth;try{auth=Au.initializeAuth(app,{persistence:[Au.browserLocalPersistence,Au.browserSessionPersistence,Au.inMemoryPersistence],popupRedirectResolver:Au.browserPopupRedirectResolver})}catch(_){auth=Au.getAuth(app)}
   S.fb={A,Au,D,app,auth,db:D.getDatabase(app)};return S.fb}
+async function roomForUid(uid){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";const h=new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("dcc-room:"+uid)));return [...h.slice(0,8)].map(x=>a[x%a.length]).join("").replace(/^(.{4})/,"$1-")}
 const roomCode=()=>{const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(8));return [...r].map(x=>a[x%a.length]).join("").replace(/^(.{4})/,"$1-")};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(_){return d}};const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}};
 const fbClean=o=>JSON.parse(JSON.stringify(o,(k,v)=>v===undefined?null:v));
@@ -2519,7 +2522,8 @@ async function liveGmBoot(){let fb;try{fb=await fbLoad()}catch(e){liveGate("erro
   let u=await authUser(fb);try{const rr=await fb.Au.getRedirectResult(fb.auth);if(rr?.user)u=rr.user}catch(_){}
   if(!u||(u.isAnonymous&&!lsGet("dcc.gmDevice",false))){await new Promise(res=>{S.liveSignIn=res;liveGate("signin")});u=fb.auth.currentUser}
   if(u.isAnonymous)lsSet("dcc.gmDevice",true);
-  const url=new URL(location.href);let room=(url.searchParams.get("room")||lsGet("dcc.gmRoom","")||"").toUpperCase();
+  const url=new URL(location.href);let room=(url.searchParams.get("room")||"").toUpperCase();
+  if(!room)room=u.isAnonymous?(lsGet("dcc.gmRoom","")||"").toUpperCase():await roomForUid(u.uid);
   const {D,db}=fb;
   if(room){let meta=null;try{meta=(await D.get(D.ref(db,`campaigns/${room}/meta`))).val()}catch(_){}
     if(meta&&meta.gmUid!==u.uid){liveGate("notyours",room);return null}
@@ -2561,7 +2565,7 @@ async function liveDeviceOnly(){const fb=S.fb;try{await fb.Au.signInAnonymously(
 function livePushEvent(ev){if(S.live?.role!=="gm"||!S.fb)return;const {D,db}=S.fb;D.push(D.ref(db,livePath("events")),fbClean({...ev,ts:Date.now()})).catch(()=>toast("Couldn't reach players"))}
 function playerLink(id){const u=new URL(location.href);u.search="";u.hash="";u.pathname=u.pathname.replace(/[^/]*$/,"index.html");u.searchParams.set("room",S.live.room);if(id)u.searchParams.set("char",id);return u.toString()}
 function livePanel(){if(S.live?.role!=="gm")return "";const cs=Object.values(S.sheets).filter(x=>x.kind==="crawler");
-  return `<div class="livebox"><div class="row" style="gap:8px;align-items:center"><b>Live room</b><span class="mono">${esc(S.live.room)}</span>${livePill()}<span class="dim" style="font-size:12px">${esc(S.live.email||(S.live.anon?"This device only":""))}</span>${S.live.anon?`<button class="btn sm gold" data-act="liveLink">🔗 Link my Google account</button>`:""}</div>
+  return `<div class="livebox"><div class="row" style="gap:8px;align-items:center"><b>Live room</b><span class="mono">${esc(S.live.room)}</span>${livePill()}<span class="dim" style="font-size:12px">${esc(S.live.email||(S.live.anon?"This device only":""))}</span>${S.live.anon?`<button class="btn sm gold" data-act="liveLink">🔗 Link my Google account</button>`:`<button class="btn sm ghost" data-act="liveSignOut">Sign out</button>`}</div>
    <p class="dim" style="font-size:13px;margin:6px 0">Send each player their own link once. Their phone updates by itself when you change their character.</p>
    <div class="row" style="gap:6px">${cs.map(c=>`<button class="btn sm" data-act="liveCopy" data-id="${c.id}">🔗 ${esc(c.name)}${c.__owner?" ✓":""}</button>`).join("")}<button class="btn sm ghost" data-act="liveCopy" data-id="">🔗 New player link</button></div>
    <div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" data-act="announceOpen">📣 Message the party</button><label class="row" style="gap:6px;font-size:13px"><input type="checkbox" id="autoSpeak" ${soundOn()?"checked":""}> Read System Messages aloud on this device</label></div></div>`}
