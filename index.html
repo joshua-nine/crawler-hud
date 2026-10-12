@@ -2503,7 +2503,8 @@ const LIVE=window.LIVE_CFG?{cfg:window.LIVE_CFG,role:window.LIVE_ROLE||"player"}
 const FBV="12.17.1";
 async function fbLoad(){if(S.fb)return S.fb;const b=window.FB_BASE||`https://www.gstatic.com/firebasejs/${FBV}/`;
   const [A,Au,D]=await Promise.all([import(b+"firebase-app.js"),import(b+"firebase-auth.js"),import(b+"firebase-database.js")]);
-  const app=A.initializeApp(LIVE.cfg);S.fb={A,Au,D,app,auth:Au.getAuth(app),db:D.getDatabase(app)};return S.fb}
+  const app=A.initializeApp(LIVE.cfg);let auth;try{auth=Au.initializeAuth(app,{persistence:[Au.browserLocalPersistence,Au.browserSessionPersistence,Au.inMemoryPersistence],popupRedirectResolver:Au.browserPopupRedirectResolver})}catch(_){auth=Au.getAuth(app)}
+  S.fb={A,Au,D,app,auth,db:D.getDatabase(app)};return S.fb}
 const roomCode=()=>{const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(8));return [...r].map(x=>a[x%a.length]).join("").replace(/^(.{4})/,"$1-")};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(_){return d}};const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}};
 const fbClean=o=>JSON.parse(JSON.stringify(o,(k,v)=>v===undefined?null:v));
@@ -2535,7 +2536,7 @@ function liveGate(kind,extra){const m=$("#main");if(!m)return;
    ${kind==="signin"?`<p>Sign in with Google so your floors and your players' characters sync live. Players never need an account.</p><button class="btn gold" data-act="liveGoogle">Sign in with Google</button>
      <p id="liveErr" class="tip" style="border-color:var(--bad);margin:12px auto 0;max-width:460px;text-align:left">${esc(S.liveErr?liveAuthMsg(S.liveErr):"")}</p>
      <div style="margin-top:14px"><button class="btn sm ghost" data-act="liveDevice">Use this device only (no Google)</button><p class="dim" style="font-size:12px;margin:6px 0 0">Works right away, but you can only run the game from this browser.</p></div>`
-    :kind==="notyours"?`<p>Room <b class="mono">${esc(extra)}</b> was made by a different Google account.</p><button class="btn gold" data-act="liveNewRoom">Start my own room</button>`
+    :kind==="notyours"?`<p>Room <b class="mono">${esc(extra)}</b> belongs to a different sign-in (or one that was deleted). Start a fresh room for this account. Your floors and sheets can come back with <b>Restore backup</b>.</p><button class="btn gold" data-act="liveNewRoom">Start my own room</button>`
     :`<p>${esc(extra||"")}</p><button class="btn gold" data-act="cloudRetry">Try again</button>`}</section>`}
 function liveAuthMsg(e){const c=String(e?.code||e?.message||e||"unknown");S.liveErr=c;
   return /unauthorized-domain/.test(c)?"Firebase doesn't trust this site yet: add joshua-nine.github.io in Authentication → Settings → Authorized domains, then try again."
@@ -2543,8 +2544,10 @@ function liveAuthMsg(e){const c=String(e?.code||e?.message||e||"unknown");S.live
    :/popup-blocked/.test(c)?"Your browser blocked the sign-in window. Allow pop-ups for this site, or use 'This device only'."
    :/popup-closed|cancelled-popup/.test(c)?"The Google window closed before finishing. Try again, or use 'This device only'."
    :/network/.test(c)?"No connection to Google. Check your internet and try again.":"Sign-in didn't finish ("+c+")."}
-async function liveGoogle(){const fb=S.fb,p=new fb.Au.GoogleAuthProvider();try{await fb.Au.signInWithPopup(fb.auth,p);S.liveSignIn&&S.liveSignIn()}
-  catch(e){liveGate("signin");const m=$("#liveErr");if(m)m.textContent=liveAuthMsg(e)}}
+async function liveGoogle(){const fb=S.fb,p=new fb.Au.GoogleAuthProvider();p.setCustomParameters?.({prompt:"select_account"});
+  try{await fb.Au.signInWithPopup(fb.auth,p);S.liveSignIn&&S.liveSignIn()}
+  catch(e){await new Promise(r=>setTimeout(r,800));const u=fb.auth.currentUser;if(u&&!u.isAnonymous){S.liveSignIn&&S.liveSignIn();return}
+    liveGate("signin");const m=$("#liveErr");if(m)m.textContent=liveAuthMsg(e)}}
 async function liveLinkGoogle(){const fb=S.fb,u=fb.auth.currentUser;if(!u)return;const p=new fb.Au.GoogleAuthProvider();
   try{const r=await fb.Au.linkWithPopup(u,p);S.live.email=r.user.email||"";S.live.anon=false;lsSet("dcc.gmDevice",false);renderMain();toast("Google linked. Open gm.html on any device and sign in with Google.")}
   catch(e){const c=String(e?.code||e);
