@@ -442,6 +442,7 @@ body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
         <button class="btn" data-act="manageFloors" aria-expanded="false" id="manageBtn">Manage floors</button>
         <button class="btn" data-act="driveBackup" id="driveBtn">☁ Back up to Drive</button>
         <button class="btn" data-act="moodOpen" id="moodBtn">🤖 AI mood</button>
+        <button class="btn" data-act="cbR20Open" id="r20Btn" title="Send floors, monsters and crawler sheets to Roll20">🎲 Roll20</button>
       </div>
       <div class="save" id="saveState">Loading…</div>
     </div>
@@ -2362,7 +2363,7 @@ function renderPop(){let el=document.getElementById("pop");if(!el){el=document.c
      <div class="lvlgrid">${LEVEL_REASONS.map(([l,n],i)=>`<button class="lvlbtn" data-act="levelApply" data-i="${i}"><b>${typeof n==="number"?"+"+n:n}</b><span>${esc(l)}</span></button>`).join("")}</div>
      <div class="row" style="margin-top:10px;gap:6px;align-items:flex-end"><label class="f" style="width:110px"><span>Custom</span><input type="number" id="lvlN" min="1" max="50" value="1"></label><button class="btn sm" data-act="levelApply" data-i="custom">Add levels</button></div>
      <p class="dim" style="font-size:12px;margin-top:10px">${+c.floor>=3?`On Floor 3+, each level gives ${H.statPerLevel} Stat Points (house rule, change below). You'll pick where they go next.`:"On Floors 1–2 you just record the level. Stat Points start on the Third Floor."}</p>${houseBox()}`}
-  if(P.mode==="mood")body=moodPop();
+  if(P.mode==="mood")body=moodPop();else if(P.mode==="r20")body=r20Pop();
   if(P.mode==="info")body=`<div class="infopop">${P.html}</div>`;
   if(P.mode==="announce")body=`<div class="aibox"><div class="aihead">SYSTEM MESSAGE</div><div style="white-space:pre-wrap;font-size:16px">${esc(P.say)}</div></div><div class="row" style="margin-top:10px;justify-content:flex-end">${speakBtn(P.say,P.voice)}</div>`;
   if(P.mode==="link")body=`<p>Send this link to the player once (text, Discord, email). It opens their character and keeps it in sync. No account needed.</p><textarea id="shareCode" rows="3" readonly style="font-family:var(--f-mono);font-size:12px;word-break:break-all">${esc(P.code)}</textarea><div class="row" style="margin-top:10px;justify-content:flex-end">${navigator.share?`<button class="btn" data-act="shareNative">Share…</button>`:""}<button class="btn gold" data-act="shareCopy">Copy link</button></div>`;
@@ -2378,7 +2379,7 @@ function renderPop(){let el=document.getElementById("pop");if(!el){el=document.c
   if(P.mode==="alloc"){const c=S.sheets[P.id],A=P.alloc,used=STATS.reduce((t,s)=>t+(A[s]||0),0),left=(c.statPts||0)-used;
     body=`<p>Spend ${esc(c.name)}'s Stat Points. Each point raises a Stat by 1 (Unenhanced and Enhanced). <b>${left}</b> left.</p>${allocGrid(c,A,"allocAdj",left)}
      <div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn ghost" data-act="allocLater">Decide later</button><button class="btn gold" data-act="allocApply" ${used?"":"disabled"}>Apply ${used} point${used===1?"":"s"}</button></div>`}
-  el.innerHTML=`<div class="pop-bg" data-act="popClose"></div><div class="pop-card" role="dialog" aria-modal="true" aria-labelledby="popT"><header><div><small>${P.mode==="levelPick"?"LEVEL UP":P.mode==="alloc"?"STAT POINTS":P.mode==="share"?"SHARE CODE":P.mode==="load"?"LOAD A CHARACTER":P.mode==="img"?"IMAGE":P.mode==="link"?"PLAYER LINK":P.mode==="compose"?"MESSAGE THE PARTY":P.mode==="mood"?"SYSTEM AI MOOD":P.mode==="info"?"BACKUP":"SYSTEM NOTIFICATION"}</small><h2 id="popT">${esc(P.title||"")}</h2></div><button class="x" data-act="popClose" aria-label="Close">✕</button></header><div class="pop-body">${body}</div>
+  el.innerHTML=`<div class="pop-bg" data-act="popClose"></div><div class="pop-card" role="dialog" aria-modal="true" aria-labelledby="popT"><header><div><small>${P.mode==="levelPick"?"LEVEL UP":P.mode==="alloc"?"STAT POINTS":P.mode==="share"?"SHARE CODE":P.mode==="load"?"LOAD A CHARACTER":P.mode==="img"?"IMAGE":P.mode==="link"?"PLAYER LINK":P.mode==="compose"?"MESSAGE THE PARTY":P.mode==="mood"?"SYSTEM AI MOOD":P.mode==="r20"?"ROLL20 EXPORT":P.mode==="info"?"BACKUP":"SYSTEM NOTIFICATION"}</small><h2 id="popT">${esc(P.title||"")}</h2></div><button class="x" data-act="popClose" aria-label="Close">✕</button></header><div class="pop-body">${body}</div>
    ${P.mode==="changes"||P.mode==="announce"?`<footer><button class="btn gold" data-act="popClose">${(S.popQ||[]).length?`Next (${S.popQ.length})`:"Done"}</button></footer>`:""}</div>`}
 function houseBox(){const H=house();return `<details class="housebox"><summary>House rules</summary><div class="row" style="gap:10px;margin-top:8px;align-items:flex-end"><label class="f" style="width:150px"><span>Stat Points per level (Floor 3+)</span><input type="number" min="0" max="10" data-house="statPerLevel" value="${H.statPerLevel}"></label>
   <label class="row" style="gap:6px"><input type="checkbox" data-house="bankTutorial" ${H.bankTutorial?"checked":""}> Award points for levels earned on Floors 1–2 when reaching Floor 3</label></div><p class="dim" style="font-size:12px;margin:6px 0 0">The starter books don't give the number; swap in the Core Rulebook's when it's out.</p></details>`}
@@ -2855,8 +2856,50 @@ function combatAct(a,el){switch(a){
   case "moodOpen":S.pop={mode:"mood",title:"How is the System AI feeling?"};renderPop();return;
   case "moodSet":setMood(el.dataset.k);S.pop=null;renderPop();return;
   case "moodRoll":{const r=1+Math.floor(Math.random()*6),k=Object.keys(MOODS).find(x=>MOODS[x].n===r);setMood(k);S.pop=null;renderPop();return}
+  case "cbR20Open":S.pop={mode:"r20",title:"Send this to Roll20",scope:"all"};renderPop();return;
+  case "cbR20Scope":S.pop.scope=el.dataset.k;renderPop();return;
+  case "cbR20Copy":{const t=JSON.stringify(roll20Export(S.pop.scope));(async()=>{let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(_){const ta=document.getElementById("r20Text");if(ta){ta.value=t;ta.hidden=false;ta.select();try{ok=document.execCommand("copy")}catch(_){}}}toast(ok?"Copied. Paste it into the DCC Import handout in Roll20.":"Select the text and copy it")})();return}
+  case "cbR20Dl":{const t=JSON.stringify(roll20Export(S.pop.scope),null,1),u=URL.createObjectURL(new Blob([t],{type:"application/json"})),a=document.createElement("a");a.href=u;a.download="roll20-import.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);toast("Saved roll20-import.json");return}
   case "moodInfo":{const M=MOODS[S.mood];if(M)toast(`${M.emoji} ${M.line}`);return}}}
 
+
+/* ===================== ROLL20 EXPORT (for the DCC Importer Mod script) ===================== */
+const R20_TYPES=new RegExp("\\b("+TYPE_WORDS+")\\b","i");
+function r20Defs(traits){const txt=(traits||[]).map(t=>`${t.name}: ${t.text}`).join(". "),pick=re=>{const m=txt.match(re);return m?(m[1].match(new RegExp(TYPE_WORDS,"gi"))||[]).map(normType).join(", "):""};
+  return {immune:pick(/Immune:\s*([^.]+)/i),resist:pick(/Resists?(?:\s*\(half\))?:\s*([^.]+)/i),vuln:pick(/Vulnerab\w*(?:\s*\(double\))?:\s*([^.]+)/i)}}
+function r20Mob(m,f){const c=mobCalc({...m,floor:m.floor||f.number}),d=r20Defs(m.traits);
+  return {kind:"monster",name:m.name||"Unnamed",mobKind:c.isBoss?"Boss":"Mob",tier:c.isBoss?m.tier:"",level:c.L,floor:c.Fl,size:m.size,type:m.type,move:m.move,
+    stats:Object.fromEntries(STATS.map(s=>[s,+m.stats?.[s]||0])),hbMax:c.slots,hb:c.slots,armor:c.dr,...d,
+    attacks:c.attacks.map(a=>({name:a.name||"Attack",stat:a.stat||"STR",rank:0,dice:String(a.dmg).split("+")[0],dmgStat:a.stat||"STR",type:a.type||"",range:a.range||"",area:!!a.area,effect:a.effect||""})),
+    traits:(m.traits||[]).filter(t=>t.name||t.text).map(t=>`${t.name}. ${t.text}`).join("\n\n")+(c.isBoss?"\n\nBoss: takes 1 action per crawler, even after one dies.":""),
+    clues:(m.clues||[]).filter(x=>String(x).trim()).map(x=>"• "+x).join("\n"),announce:`${m.name}. Level ${c.L}${c.isBoss?` ${m.tier} Boss!`:"."} ${m.announce||""}`.trim(),notes:m.notes||""}}
+function r20Sheet(c){const k=sheetCalc(c),g=k.gb,crawler=c.kind!=="creature",lines=a=>(a||[]).map(x=>String(x||"").trim()).filter(Boolean).join("\n");
+  const fixedDr=c.fixed?.dr!=null&&c.fixed?.dr!=="";
+  return {kind:crawler?"crawler":"monster",name:c.name||"Crawler",race:c.race||"",cls:c.cls||"",crawlerNo:c.crawlerNo||"",level:num(c.level)||1,floor:num(c.floor)||F()?.number||1,
+    stats:Object.fromEntries(STATS.map(s=>[s,num(c.stats[s]?.e)])),bonus:{...g.stat},hbMax:k.slots,hb:k.left,
+    armor:fixedDr?num(c.fixed.dr):num(c.armor),drBonus:(fixedDr?0:num(c.drBuffs))+g.dr,evadeBonus:num(c.evadeBuffs)+g.evade,
+    resist:[...g.res].join(", "),immune:[...g.imm].join(", "),vuln:[...g.vul].join(", "),
+    drained:+((String(c.debuffs||"").match(/Drained ×(\d+)/)||[])[1]||0),dying:/\bDying\b/.test(c.debuffs||""),debuffs:c.debuffs||"",
+    mana:c.manaCur===""?undefined:num(c.manaCur),aiFavor:num(c.aiFavor),move:String(c.move||20),mobKind:crawler?"":(/Boss/i.test(c.cls||"")?"Boss":"Mob"),
+    attacks:c.attacks.filter(a=>a.name).map(a=>({name:a.name,stat:a.stat||"STR",rank:num(a.rank),dice:a.hitTxt?a.dice:String(a.dice||"").replace(/\s+/g,""),dmgStat:a.hitTxt?"none":(a.dmgStat||"none"),type:(String(a.effects||"").match(R20_TYPES)||[""])[0],range:"",area:/\barea\b/i.test(a.effects||""),effect:a.effects||""})),
+    skills:c.skills.filter(s=>s.name).map(s=>({name:s.name,rank:num(s.rank),stat:s.stat||"DEX"})),
+    gear:{...c.gear},inventory:c.inv.filter(i=>i.item).map(i=>`${i.item}${i.qty?` ×${i.qty}`:""}${i.notes?` (${i.notes})`:""}`).join("\n"),
+    abilities:[lines(c.racial),lines(c.classAb)].filter(Boolean).join("\n"),notes:c.notes||""}}
+function roll20Export(scope){const all=Object.values(S.floors).sort((a,b)=>a.number-b.number),floors=scope==="floor"&&F()?[F()]:all;
+  const chars=[],seen={};const add=rc=>{const k=rc.name.toLowerCase();if(seen[k]&&rc.kind==="monster")rc.name+=` (F${rc.floor})`;seen[rc.name.toLowerCase()]=1;chars.push(rc)};
+  if(scope!=="mobs")Object.values(S.sheets).forEach(c=>add(r20Sheet(c)));
+  if(scope!=="sheets")floors.forEach(f=>(f.mobs||[]).forEach(m=>add(r20Mob(m,f))));
+  return {kind:"dcc-roll20",v:1,exportedAt:new Date().toISOString(),floor:F()?.number||1,chars,floors:scope==="sheets"||scope==="mobs"?[]:floors.map(f=>({number:f.number,name:f.name,theme:f.theme,collapseDays:f.collapseDays,features:f.features,janitor:f.janitor,threads:f.threads,notes:f.notes,
+    neighborhoods:(f.neighborhoods||[]).map(n=>({name:n.name,summary:n.summary,theme:n.theme,environment:n.environment,boss:n.boss,bossNotes:n.bossNotes,traps:(n.traps||[]).filter(t=>t&&t.name),npcs:(n.npcs||[]).map(x=>typeof x==="string"?x:{name:x?.name||""})})),
+    quests:(f.quests||[]).map(q=>({name:q.name,summary:q.summary,goal:q.goal})),mobs:(f.mobs||[]).map(m=>({name:m.name}))}))}}
+function r20Pop(){const P=S.pop,x=roll20Export(P.scope),cr=x.chars.filter(c=>c.kind==="crawler").length,mo=x.chars.length-cr;
+  const opt=(k,l)=>`<button class="chip" aria-pressed="${P.scope===k}" data-act="cbR20Scope" data-k="${k}">${l}</button>`;
+  return `<p class="dim" style="margin:0 0 10px">For Roll20 Pro or Elite with the <b>DCC Importer</b> Mod script. Copy this, paste it into the <b>DCC Import</b> handout in your Roll20 game, then type <code>!dcc-import handout</code> in chat.</p>
+   <div class="chips" style="margin-bottom:10px">${opt("all","Everything")}${opt("floor",`This floor only`)}${opt("sheets","Crawler sheets")}${opt("mobs","Monsters")}</div>
+   <p style="margin:0 0 10px"><b>${cr}</b> crawler sheet${cr===1?"":"s"} · <b>${mo}</b> monster${mo===1?"":"s"} · <b>${x.floors.length}</b> floor handout${x.floors.length===1?"":"s"}</p>
+   <p class="dim" style="font-size:13px;margin:0 0 10px">Already imported? Importing again updates the characters with the same name. Art isn't included: upload pictures to your Roll20 library and drag them onto the sheets.</p>
+   <textarea id="r20Text" rows="4" hidden readonly style="font-family:var(--f-mono);font-size:11px;width:100%"></textarea>
+   <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap"><button class="btn" data-act="cbR20Dl">Download file</button><button class="btn gold" data-act="cbR20Copy">Copy for Roll20</button></div>`}
 
 /* ===================== BARROW COMMAND: wights, draugr, life drain, blight ===================== */
 const BARROW_RULES={
