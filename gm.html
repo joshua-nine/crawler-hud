@@ -1261,7 +1261,7 @@ document.addEventListener("click",async e=>{
    case "liveCopy":{const link=playerLink(el.dataset.id);S.pop={mode:"link",title:el.dataset.id?`${S.sheets[el.dataset.id]?.name||"Player"}: player link`:"New player link",code:link};renderPop();return}
    case "announceOpen":S.pop={mode:"compose",title:"Message the party",voice:"system",text:el.dataset.text||""};renderPop();return;
    case "annPreview":speakAs($("#annText")?.value,$("#annVoice")?.value);return;
-   case "annSend":{const text=($("#annText")?.value||"").trim();if(!text){toast("Type a message first");return}const voice=$("#annVoice")?.value||"system",to=$("#annTo")?.value||"";
+   case "annSend":if($("#annText")?.value?.trim())bridge({type:"announce",text:$("#annText").value.trim()});{const text=($("#annText")?.value||"").trim();if(!text){toast("Type a message first");return}const voice=$("#annVoice")?.value||"system",to=$("#annTo")?.value||"";
      livePushEvent({type:"announce",title:"System Message",text,voice,targets:to?[to]:[]});if(soundOn())speakAs(text,voice);S.pop=null;renderPop();toast(to?"Sent":"Sent to the party");return}
    case "soundToggle":setSound(!soundOn());if(soundOn()){chime();speakAs("Sound on. Try not to die.","system")}renderMain();return;
    case "driveBackup":driveBackup(el);return;
@@ -2244,7 +2244,10 @@ function rollExpr(expr){const parts=[];let total=0,nat=null;const re=/([+-]?)\s*
       const sum=rs.reduce((a,b)=>a+b,0)*sg;total+=sum;parts.push(`${sg<0?"−":""}${n}d${die}[${rs.join(",")}]`)}
     else if(m[5]){const v=(m[4]==="-"?-1:1)*+m[5];total+=v;parts.push(v<0?`−${-v}`:`+${v}`)}}
   return {total,parts,nat}}
-function showRoll(label,expr,sub){const r=rollExpr(expr);let box=document.getElementById("rollbox");if(!box){box=document.createElement("div");box.id="rollbox";box.className="rollbox";box.setAttribute("role","status");document.body.appendChild(box)}
+/* ---- Roll20 bridge: the Crawler HUD → Roll20 browser extension listens for these ---- */
+function bridge(ev){try{window.postMessage({__dcc:1,v:1,ts:Date.now(),...ev},location.origin==="null"?"*":location.origin)}catch(_){}}
+function showRoll(label,expr,sub){const r=rollExpr(expr);try{const c=S.sheets[S.sheetSel],ev={type:"roll",who:c?.name||"",label,sub:sub||"",expr:String(expr),total:r.total,parts:r.parts.join(" ").replace(/^\+/,""),nat:r.nat};
+  if(S.live?.role==="player"&&S.fb&&c&&S.live.mine.has(c.id)){const {D,db}=S.fb;D.set(D.ref(db,livePath(`chars/${c.id}/roll`)),fbClean({...ev,ts:Date.now()})).catch(()=>{})}else bridge(ev)}catch(_){}let box=document.getElementById("rollbox");if(!box){box=document.createElement("div");box.id="rollbox";box.className="rollbox";box.setAttribute("role","status");document.body.appendChild(box)}
   const crit=r.nat===20?"crit":r.nat===1?"fumble":"";
   box.innerHTML=`<div class="rb-l"><small>${esc(sub||"Roll")}</small><b>${esc(label)}</b><i class="mono">${esc(r.parts.join(" ").replace(/^\+/,""))}</i>${crit?`<em>${r.nat===20?"Natural 20!":"Natural 1. Critical Fail."}</em>`:""}</div><div class="rb-t ${crit}">${r.total}</div><button class="x" data-act="rollClose" aria-label="Close">✕</button>`;
   box.hidden=false;box.classList.remove("pop");void box.offsetWidth;box.classList.add("pop");clearTimeout(showRoll._t);showRoll._t=setTimeout(()=>box.hidden=true,6000);
@@ -2343,7 +2346,7 @@ function diffC(a,b){const R=[],ka=sheetCalc(a),kb=sheetCalc(b);const f=(label,x,
   if(a.uplift?.state!==b.uplift?.state&&b.uplift?.state==="fed")R.push({label:"Speech",from:"Can't talk",to:"Can talk",kind:"up"});
   const da=a.skills.filter(s=>s.done).length,db=b.skills.filter(s=>s.done).length;if(da&&!db)R.push({label:"Advancement marks",from:`${da} marked`,to:"cleared",kind:""});
   return R}
-function openChanges(title,say,rows,extra){S.pop={mode:"changes",title,say,rows,extra:extra||""};renderPop();
+function openChanges(title,say,rows,extra){if(!S.player&&(say||rows?.length))bridge({type:"changes",title,say:say||"",rows:(rows||[]).slice(0,8).map(r=>`${r.label||""}: ${r.from??""} → ${r.to??""}`)});S.pop={mode:"changes",title,say,rows,extra:extra||""};renderPop();
   if(S.live?.role==="gm")livePushEvent({type:"changes",title,say:say||"",targets:rows.map(r=>r.id).filter(Boolean)});if(say&&soundOn()&&S.live?.role!=="player")speakAs(say,"system")}
 function diffTable(d){if(!d.length)return `<p class="muted" style="margin:4px 0">No changes to the numbers.</p>`;
   return `<div class="difft">${d.map(r=>r.wide?`<div class="dr wide ${r.kind||""}"><span class="dl">${esc(r.label)}</span><span class="dv">${r.from?`<s>${esc(r.from)}</s> `:""}${esc(r.to)}</span></div>`
@@ -2586,7 +2589,7 @@ async function liveGmBoot(){let fb;try{fb=await fbLoad()}catch(e){liveGate("erro
     if(meta&&meta.gmUid!==u.uid){liveGate("notyours",room);return null}
     if(!meta)await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
   else{room=roomCode();await D.set(D.ref(db,`campaigns/${room}/meta`),{gmUid:u.uid,name:"DCC Campaign",createdAt:Date.now()})}
-  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();liveWatchMood();liveLoadPack();
+  lsSet("dcc.gmRoom",room);S.live={role:"gm",room,uid:u.uid,email:u.email||"",anon:!!u.isAnonymous,online:false};liveWatchConn();liveWatchMood();liveLoadPack();liveWatchRolls();
   const base=c=>c==="floors"?livePath("gm/floors"):livePath("chars");
   return {collection:c=>({onSnapshot(cb,err){return D.onValue(D.ref(db,base(c)),snap=>{const v=snap.val()||{};
         cb({docs:Object.entries(v).filter(([,d])=>c==="floors"||d&&d.sheet).map(([id,d])=>({id,exists:true,data:()=>c==="floors"?d:{...d.sheet,id,__owner:!!d.ownerUid}}))})},e=>err&&err(e))},
@@ -2689,7 +2692,7 @@ function applyMood(k,announce){const M=MOODS[k]||null;const prev=S.mood;S.mood=M
   if(S.player&&document.querySelector(".pl-top")&&!editing())renderMain();
   if(announce&&M&&prev!==S.mood){toast(`${M.emoji} ${M.line}`);if(soundOn())speakAs(M.line,"system")}}
 const moodChip=()=>{const M=MOODS[S.mood];return M?`<button class="moodchip" data-act="moodInfo" title="The System AI's mood">${M.emoji} ${M.label}</button>`:""};
-function setMood(k){applyMood(k,true);try{localStorage.setItem("floorbuilder.mood",k||"")}catch(_){}
+function setMood(k){applyMood(k,true);if(MOODS[k])bridge({type:"mood",mood:MOODS[k].label,line:MOODS[k].line});try{localStorage.setItem("floorbuilder.mood",k||"")}catch(_){}
   if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;D.set(D.ref(db,livePath("meta/mood")),k||null).catch(()=>toast("Couldn't reach players"))}}
 function liveWatchMood(){if(!S.fb||!S.live)return;const {D,db}=S.fb;let first=true;D.onValue(D.ref(db,livePath("meta/mood")),snap=>{const v=snap.val()||"";if(v!==S.mood)applyMood(v,!first);first=false},()=>{})}
 function moodPop(){return `<p class="dim" style="margin:0 0 10px">Changes the color of every System Message, toast and banner, and the AI's voice. ${S.live?.role==="gm"?"Your players see it too.":""}</p>
@@ -2841,7 +2844,7 @@ function cbResolve(){const C=cbState(),f=F();let A;
     saveSheet(id);L.rows.push({name:c.name,slots:R.slots,dying:R.dying,outcome,steps:R.steps});
     const say=`${A.who}${A.what?` uses ${A.what}`:""}${C.kind==="trap"?" springs":""}! ${outcome?outcome+". ":""}${R.steps.length?R.steps.join(", ")+". ":"No damage. "}${R.slots?`You lose ${R.slots} Health Bar slot${R.slots>1?"s":""}.`:"You keep all your Health."}${R.slots&&C.debuff.trim()?` You gain the ${C.debuff.trim()} Debuff.`:""}${R.drained?` Life Drain: you have ${R.drained} Drained stack${R.drained>1?"s":""}. Those slots can't be healed until a Long Rest.`:""}${R.dying?" You are DYING. Get healed to 10% or you die.":""}`;
     livePushEvent({type:"hit",title:A.title,text:say,voice:A.voice,targets:[id],slots:R.slots,dying:R.dying})});
-  C.log.unshift(L);C.log=C.log.slice(0,12);renderMain();
+  C.log.unshift(L);C.log=C.log.slice(0,12);renderMain();bridge({type:"combat",title:L.title,roll:L.roll,rows:L.rows.map(r=>({name:r.name,slots:r.slots,dying:!!r.dying,outcome:r.outcome||"",steps:(r.steps||[]).join(", ")}))});
   const hurt=L.rows.filter(r=>r.slots).length;toast(hurt?`${hurt} crawler${hurt>1?"s":""} hurt${S.live?.role==="gm"?" · sent to their phones":""}`:"Nobody lost Health")}
 function cbUndo(id){const C=cbState(),L=C.log.find(x=>x.id===id);if(!L||L.undone)return;Object.entries(L.undo).forEach(([cid,u])=>{const c=S.sheets[cid];if(!c)return;c.hbLost=u.hbLost.slice();c.debuffs=u.debuffs;saveSheet(cid)});
   L.undone=true;renderMain();toast("Undone")}
@@ -2956,6 +2959,10 @@ async function loadPackFile(file){let p;try{p=JSON.parse(await file.text())}catc
   const n=applyPack(p);if(!n){toast("That file isn't a monster pack");return}
   if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;try{await D.set(D.ref(db,livePath("gm/pack")),fbClean(p));toast(`${n} monsters loaded and saved to your room`)}catch(_){toast(`${n} monsters loaded on this device only`)}}
   else toast(`${n} monsters loaded`);S.libSet="uploads";renderMain()}
+function liveWatchRolls(){if(!S.fb||S.live?.role!=="gm")return;const {D,db}=S.fb,since=Date.now(),seen={};
+  const on=snap=>{const r=snap.val()?.roll;if(!r||!(r.ts>since)||r.ts<=(seen[snap.key]||0))return;seen[snap.key]=r.ts;const {ts,...ev}=r;bridge({...ev,type:"roll",player:true});
+    toast(`🎲 ${r.who||"A player"}: ${r.label} = ${r.total}${r.nat===20?" (Natural 20!)":r.nat===1?" (Natural 1)":""}`)};
+  D.onChildChanged(D.ref(db,livePath("chars")),on,()=>{});D.onChildAdded(D.ref(db,livePath("chars")),on,()=>{})}
 async function liveLoadPack(){if(!S.fb||S.live?.role!=="gm"||PACK_EMBED)return;const {D,db}=S.fb;try{const v=(await D.get(D.ref(db,livePath("gm/pack")))).val();if(v){applyPack(v);if(S.tab==="mobs"||S.tab==="loot")renderMain()}}catch(_){}}
 function libFilter(lib,set){const q=(S.libQ||"").trim().toLowerCase(),k=S.libKind||"",fam=S.libFam||"";
   return lib.items.map((L,i)=>[L,i]).filter(([L])=>(!q||(L.name+" "+L.origin+" "+L.type+" "+(L.concept||"")).toLowerCase().includes(q))&&(!k||(k==="Mob"?L.kind==="Mob":L.kind!=="Mob"))&&(!fam||L.origin===fam))}
