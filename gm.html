@@ -427,6 +427,7 @@ body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
  body.player .rollbox{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 }
 
+.recbox{border:1px solid var(--line);border-left:3px solid var(--gold,#d8b25a);border-radius:8px;padding:5px 8px;font-size:12.5px;display:grid;gap:1px}.recbox i{color:var(--dim,#9aa3bd);font-size:11px}.recbox small{color:var(--dim,#9aa3bd);font-size:11.5px}
 </style>
 
 </head>
@@ -1006,12 +1007,13 @@ function lichPanel(f){
    ${lib.items.length>24?(()=>{const fams=[...new Set(lib.items.map(L=>L.origin))].sort();return `<div class="row" style="gap:8px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
      <label class="f" style="flex:1 1 200px"><span>Search</span><input type="search" id="libQ" value="${esc(S.libQ||"")}" placeholder="dragon, undead, swarm…"></label>
      <label class="f" style="flex:0 1 140px"><span>Show</span><select id="libKind"><option value="">Mobs & Bosses</option><option value="Mob" ${S.libKind==="Mob"?"selected":""}>Mobs only</option><option value="Boss" ${S.libKind==="Boss"?"selected":""}>Bosses only</option></select></label>
+     <label class="f" style="flex:0 1 190px"><span>Floor fit</span><select id="libFit"><option value="">Any floor</option><option value="near" ${S.libFit==="near"?"selected":""}>Fits Floor ${F} (±1)</option><option value="sort" ${S.libFit==="sort"?"selected":""}>Sort by best floor</option></select></label>
      <label class="f" style="flex:1 1 200px"><span>Family</span><select id="libFam"><option value="">All (${fams.length})</option>${fams.map(x=>`<option ${S.libFam===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label></div>`})():""}
    ${(()=>{const shown=libFilter(lib,set),lim=S.libLim||30;return `<p class="dim" style="font-size:12px;margin:0 0 8px">${shown.length} match${shown.length===1?"":"es"}</p><div class="grid g3" id="libGrid">${shown.slice(0,lim).map(([L,i])=>`<div class="card" style="padding:12px;display:grid;gap:6px;align-content:start">
      ${upArt(L)?`<img src="${upArt(L)}" alt="" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:8px;background:var(--bg)">`:""}
      <div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="font-size:15px">${esc(L.name)}</h3><span class="dim mono" style="font-size:11px;white-space:nowrap">${L.kind==="Mob"?`Mob · ${L.lv}`:esc(L.tier||"")}${L.page?" · p."+L.page:""}</span></div>
      ${L.book?`<span class="dim" style="font-size:11px">${esc(L.book)}</span>`:""}
-     <span class="eyebrow">${esc(L.origin)}${set==="lich"?" lich":""}${L.cr!=null?` · 5e CR ${L.cr<1?"½":L.cr}`:""}</span><p style="margin:0;font-size:13.5px" class="muted">${esc(L.concept)}</p>
+     <span class="eyebrow">${esc(L.origin)}${set==="lich"?" lich":""}${L.cr!=null?` · 5e CR ${L.cr<1?"½":L.cr}`:""}</span>${(()=>{const R=monRec(L),cf=F,d=cf-R.floor;return `<div class="recbox" title="${R.est?"Estimated from its tier":"From its 5e CR "+R.cr}"><b>Best: ${recTxt(R)}</b>${R.est?` <i>est.</i>`:""}${Math.abs(d)>=2?`<small>${d>0?"Easier":"Tougher"} than usual for Floor ${cf}. It still scales to your floor.</small>`:`<small>Good fit for Floor ${cf}.</small>`}</div>`})()}<p style="margin:0;font-size:13.5px" class="muted">${esc(L.concept)}</p>
      ${L.traits?`<p style="margin:0;font-size:12px" class="dim">${L.traits.length} traits · ${L.attacks.length} attacks</p>`:""}
      <div><button class="btn sm gold" data-act="lichUse" data-set="${set}" data-k="${i}">Forge this ${L.kind==="Mob"?"Mob":"Boss"}</button></div></div>`).join("")}</div>${shown.length>lim?`<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-act="libMore">Show more (${shown.length-lim} left)</button></div>`:""}`})()}</section>`;
 }
@@ -1120,7 +1122,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.img&&t.type==="file"){handleImage(t);return}
   if(t.id==="autoSpeak"){setSound(t.checked);if(t.checked)speakAs("System messages will be read aloud.","system");return}
   if(t.id==="packFile"){const f0=t.files[0];t.value="";if(f0)loadPackFile(f0);return}
-  if(t.id==="libKind"||t.id==="libFam"){S[t.id]=t.value;S.libLim=30;renderMain();return}
+  if(t.id==="libKind"||t.id==="libFam"||t.id==="libFit"){S[t.id]=t.value;S.libLim=30;renderMain();return}
   if(t.id==="restoreFile"){const f0=t.files[0];t.value="";if(f0)restoreBackup(f0);return}
   if(t.id==="genFlavor"){S.gen.flavor=t.value;return}
   if(t.id==="genTarget"){S.gen.target=t.value;return}
@@ -1326,7 +1328,7 @@ document.addEventListener("click",async e=>{
    case "lootAddAll":{const L=lootState();const n=L.res.length;let w="";L.res.forEach(it=>w=lootAdd(f,it));L.res=[];toast(`${n} items added${w?" to "+w:""}`);break}
    case "libSet":S.libSet=el.dataset.k;S.libQ="";S.libFam="";S.libKind="";S.libLim=30;renderMain();return;
    case "libMore":S.libLim=(S.libLim||30)+30;renderMain();return;
-   case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,S.lichTier||L.tier||"City",+f.number||3);if(!m.img&&upArt(L))m.img=upArt(L);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
+   case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,S.lichTier||L.tier||"City",+f.number||3);{const R=monRec(L);m.recFloor=R.floor;m.notes=`Recommended: ${recTxt(R)}${R.est?" (estimated)":""}.${m.notes?" "+m.notes:""}`}if(!m.img&&upArt(L))m.img=upArt(L);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
    case "genType":S.gen.type=el.dataset.k;S.gen.res=null;S.gen.locks={};S.gen.full=null;S.gen.err="";renderMain();return;
    case "genRoll":{const g=S.gen,F=+f.number||3,fresh=rollAll(g.type,F,genFlavor(f));
      if(g.res&&g.resType===g.type){Object.keys(fresh).forEach(k=>{if(g.locks[k])fresh[k]=g.res[k]});if(g.locks.type&&!g.locks.stages&&g.type==="quest")fresh.stages=rollField("quest","stages",{F,flavor:genFlavor(f),cur:fresh})}
@@ -1440,6 +1442,16 @@ const LICHES=[
   attacks:[["Necromantic Touch","INT",10,"Necrotic","5ft",0,0,""],["Necromantic Burst","INT",8,"Necrotic","Burst 20ft",1,0,""],["Life Suppression","INT",4,"Necrotic","Burst 30ft",1,1,"Any hit: target gains The Taint Debuff."]],
   clues:["Every undead in sight obeys it. Thin the ranks first.","Its throne room's unholy ground fuels it, so pull it off that ground."]}
 ];
+/* Recommended floor and crawler level for a library monster.
+   From its 5e CR when known (a solo Boss suits a 5e party of level = CR; Mobs come in groups, so a lower CR suits a higher party),
+   otherwise estimated from its tier (Bosses) or low/mid/high (Mobs). 5e party levels 1–20 spread over Floors 1–11; CR 21+ climbs to Floor 18. */
+const REC_EST={low:1.5,mid:4,high:8,Neighborhood:12,Borough:15,City:18,Province:22,Country:26,Floor:29};
+function monRec(L){const boss=L.kind!=="Mob";let cr=L.cr!=null&&L.cr!==""?+L.cr:null;const est=cr==null||isNaN(cr);
+  if(est)cr=boss?(REC_EST[L.tier]||18):(REC_EST[L.lv]||4);
+  const pl=boss?Math.max(1,Math.round(cr)):Math.max(1,Math.round(cr*1.5)+1);
+  const fl=pl<=20?Math.floor(pl/2)+1:Math.min(18,11+Math.ceil((pl-20)*0.7));
+  const r=LEVEL_ROWS[rowIdxForFloor(fl)];return {floor:fl,lv:[r.min,r.max],cr,est}}
+const recTxt=R=>`Floor ${R.floor} · crawlers Lv ${R.lv[0]}–${R.lv[1]}`;
 function lichBoss(L,tier,fl){
   if(L.kind==="Mob"){const m=blankMob("Mob"),r=LEVEL_ROWS[rowIdxForFloor(fl)];const lv=L.lv==="low"?r.min:L.lv==="high"?r.max:Math.round((r.min+r.max)/2);
     Object.assign(m,{name:L.name,level:lv,floor:fl,size:L.size,type:L.type,move:L.move||"20+S",drAdj:L.drAdj||0,announce:`${L.name}. ${L.concept}`,
@@ -3007,8 +3019,9 @@ function liveWatchRolls(){if(!S.fb||S.live?.role!=="gm")return;const {D,db}=S.fb
     toast(`🎲 ${r.who||"A player"}: ${r.label} = ${r.total}${r.nat===20?" (Natural 20!)":r.nat===1?" (Natural 1)":""}`)};
   D.onChildChanged(D.ref(db,livePath("chars")),on,()=>{});D.onChildAdded(D.ref(db,livePath("chars")),on,()=>{})}
 async function liveLoadPack(){if(!S.fb||S.live?.role!=="gm"||PACK_EMBED)return;const {D,db}=S.fb;try{const v=(await D.get(D.ref(db,livePath("gm/pack")))).val();if(v){applyPack(v);if(S.tab==="mobs"||S.tab==="loot")renderMain()}}catch(_){}}
-function libFilter(lib,set){const q=(S.libQ||"").trim().toLowerCase(),k=S.libKind||"",fam=S.libFam||"";
-  return lib.items.map((L,i)=>[L,i]).filter(([L])=>(!q||(L.name+" "+L.origin+" "+L.type+" "+(L.concept||"")).toLowerCase().includes(q))&&(!k||(k==="Mob"?L.kind==="Mob":L.kind!=="Mob"))&&(!fam||L.origin===fam))}
+function libFilter(lib,set){const q=(S.libQ||"").trim().toLowerCase(),k=S.libKind||"",fam=S.libFam||"",fit=S.libFit||"",cf=+F()?.number||1;
+  const out=lib.items.map((L,i)=>[L,i]).filter(([L])=>(!q||(L.name+" "+L.origin+" "+L.type+" "+(L.concept||"")).toLowerCase().includes(q))&&(!k||(k==="Mob"?L.kind==="Mob":L.kind!=="Mob"))&&(!fam||L.origin===fam)&&(!fit||fit==="sort"||Math.abs(monRec(L).floor-cf)<=1));
+  if(fit)out.sort((a,b)=>monRec(a[0]).floor-monRec(b[0]).floor||a[0].name.localeCompare(b[0].name));return out}
 
 const LIBRARY={uploads:{label:"Your uploads",items:UPLOADS,tip:"Everything you uploaded (Dungeon Dad, homebrew pages and more), converted to this game's rules. Big monsters are Bosses, small ones are Mobs; special rules are kept as traits. Check the traits and tweak in the Forge after you add one."},barrow:{label:"Barrow Command",items:BARROW_LIB,tip:"Norse draugr and barrow-wights: a sentient Field Officer that commands mindless Thralls, Life Drain, and Barrow Blight (agricultural warfare). Built for this game's rules."},home:{label:"Your homebrew",items:HOMEBREW,tip:"Your own 5e stat blocks, converted to this game's Boss format. Their special rules are kept as traits."},lich:{label:"Lich Codex",items:LICHES,tip:"Pointy Hat's Lich Codex (a 5e book), converted to this game's Boss format. Each lich has a soul vessel the crawlers must find."},books:{label:"Book Bosses",items:BOOK_BOSSES,tip:"Villains and Bosses from your uploaded books (DM Lair Patreon, Wintermas, Unearthed Arcane), converted. Suggested tier comes from their 5e CR."},bookmobs:{label:"Book Mobs",items:BOOK_MOBS,tip:"Regular monsters from your books, converted as Mobs. Level is set from this floor's Mob range (low, mid or high)."}};
 /* ===================== GENERATOR TABLES (original) ===================== */
