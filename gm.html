@@ -427,6 +427,7 @@ body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
  body.player .rollbox{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 }
 
+.promo{display:grid;gap:6px}.promogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.promobtn{display:grid;gap:2px;text-align:left;background:var(--panel2,#141d36);border:1px solid var(--line);border-radius:10px;padding:7px 9px;color:inherit;cursor:pointer;font:inherit}.promobtn b{font-size:13px}.promobtn span{font-size:11.5px;color:var(--muted)}@media (hover:hover){.promobtn:hover{border-color:var(--gold)}}.promobtn.on{border-color:var(--gold);background:rgba(216,178,90,.13)}.promobtn.on b{color:var(--gold)}
 .recbox{border:1px solid var(--line);border-left:3px solid var(--gold,#d8b25a);border-radius:8px;padding:5px 8px;font-size:12.5px;display:grid;gap:1px}.recbox i{color:var(--dim,#9aa3bd);font-size:11px}.recbox small{color:var(--dim,#9aa3bd);font-size:11.5px}
 </style>
 
@@ -889,7 +890,7 @@ function statBlock(m,c){
   c=c||mobCalc(m);
   const cols=Math.min(c.slots,10),rows=Math.ceil(c.slots/cols);
   const sz=SIZES.find(s=>s[0]===+m.size)||SIZES[3];
-  const kindLine=c.isBoss?`${esc(m.tier)} Boss`:(m.kind==="Elite"?"Elite":"Mob");
+  const kindLine=esc(bossLabel(m));
   return `<div class="sb">
    ${m.announce?`<div class="ann"><b>${esc(m.name)}. Level ${c.L}${c.isBoss?` ${esc(m.tier)} Boss!`:"."}</b><br>${esc(m.announce)}</div>`:""}
    ${m.img?`<img class="sbimg" src="${esc(m.img)}" alt="">`:""}<div class="nm">${esc(m.name)||"Unnamed"}</div>
@@ -915,7 +916,7 @@ function vMobs(f){
   const i=f.mobs.findIndex(m=>m.id===S.mobSel),m=f.mobs[i];
   const list=`<div class="moblist">
     <div class="row" style="margin-bottom:6px"><button class="btn sm gold" data-act="newMob" data-kind="Mob">+ Mob</button><button class="btn sm" data-act="newMob" data-kind="Boss">+ Boss</button><button class="btn sm" data-act="lichPick" aria-expanded="${!!S.lichOpen}">+ Monster Library</button></div>
-    ${f.mobs.map(x=>`<button data-act="selMob" data-id="${x.id}" aria-current="${x.id===S.mobSel}"><span><span style="display:block">${esc(x.name)}</span><span class="kind">${x.kind==="Boss"?esc(x.tier)+" Boss":esc(x.kind)}</span></span><span class="lv">Lv ${x.level}</span></button>`).join("")||`<p class="muted" style="font-size:13px">Nothing forged yet.</p>`}
+    ${f.mobs.map(x=>`<button data-act="selMob" data-id="${x.id}" aria-current="${x.id===S.mobSel}"><span><span style="display:block">${esc(x.name)}</span><span class="kind">${esc(bossLabel(x))}</span></span><span class="lv">Lv ${x.level}</span></button>`).join("")||`<p class="muted" style="font-size:13px">Nothing forged yet.</p>`}
   </div>`;
   const lich=S.lichOpen?lichPanel(f):"";
   if(!m)return `${lich}<section class="panel"><header><h2>Mob Forge</h2></header><div class="forge">${list}<div class="empty" style="grid-column:span 2">Forge a Mob or Boss. The book's formulas (pp. 270–273) fill in Surprise, Evade, DR, Health Bar and damage dice for you.</div></div></section>`;
@@ -934,6 +935,8 @@ function vMobs(f){
      <label class="f"><span>Type</span><input type="text" data-p="${b}.type" value="${esc(m.type)}" placeholder="Beastly, Undead, Ooze…"></label>
      <label class="f"><span>Move</span><input type="text" data-p="${b}.move" value="${esc(m.move)}"></label>
     </div>
+    <div class="promo"><div class="row" style="justify-content:space-between;align-items:baseline"><span class="eyebrow">Turn it into</span><span class="dim" style="font-size:12px">For Floor ${esc(+m.floor||+f.number||1)} · keeps its attacks, traits and build (${({brute:"Brute",skirm:"Skirmisher",caster:"Caster",face:"Talker",even:"Even"})[m.role||inferRole(m.stats)]})</span></div>
+     <div class="promogrid">${promoteChoices(m,+m.floor||+f.number||1)}</div></div>
     <div>
      <div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="eyebrow">Stats</span><span class="pts" id="ptsLine"></span></div>
      <div class="stats">${STATS.map(s=>`<label class="f"><span>${s}</span><input type="number" min="0" data-p="${b}.stats.${s}" data-num value="${esc(m.stats?.[s])}" style="text-align:center"><span class="mod" data-mod="${s}"></span></label>`).join("")}</div>
@@ -997,11 +1000,11 @@ function spread(m,k){
 
 function lichPanel(f){
   const F=+f.number||3,set=S.libSet||"home",lib=LIBRARY[set],tier=S.lichTier||"";
-  const tierNote=tier?(()=>{const[a,b]=bossRange(F,tier);return `Lv ${a}–${b} · ${BOSS_TIERS[tier].hb+F} HB slots`})():"Each Boss uses its suggested tier";
+  const tierNote=tier?(()=>{if(tier==="Mob"){const r=LEVEL_ROWS[rowIdxForFloor(F)];return `Bosses become Mobs: Lv ${r.min}–${r.max}, up to 10 HB slots`}const t=tier==="Dungeon"?"Neighborhood":tier,[a,b]=bossRange(F,t);return `Mobs and Bosses both become this: Lv ${a}–${b} · ${BOSS_TIERS[t].hb+F} HB slots`})():"Each monster keeps its suggested type";
   return `<section class="panel"><header><h2>Monster Library</h2><button class="x" data-act="lichPick" aria-label="Close">✕</button></header>
    <div class="chips" style="margin-bottom:10px">${Object.entries(LIBRARY).map(([k,v])=>`<button class="chip" aria-pressed="${set===k}" data-act="libSet" data-k="${k}">${esc(v.label)} (${v.items.length})</button>`).join("")}</div>
    <p class="tip" style="margin-bottom:12px">${lib.tip} Everything scales to Floor ${F}.</p>
-   <div class="row" style="margin-bottom:12px"><label class="f" style="width:220px"><span>Boss tier</span><select id="lichTier"><option value="" ${!tier?"selected":""}>Suggested tier</option>${Object.keys(BOSS_TIERS).map(t=>`<option ${t===tier?"selected":""}>${t}</option>`).join("")}</select></label>
+   <div class="row" style="margin-bottom:12px"><label class="f" style="width:220px"><span>Forge as</span><select id="lichTier"><option value="" ${!tier?"selected":""}>Suggested type</option>${BOSS_TYPES.map(([k,l])=>`<option value="${k}" ${k===tier?"selected":""}>${l}</option>`).join("")}</select></label>
     <span class="muted" style="font-size:13px">${tierNote}</span></div>
    ${set==="uploads"&&!UPLOADS.length?`<div class="livebox"><b>Load your monster pack</b><p class="dim" style="font-size:13px;margin:6px 0">Pick the <b>monster-pack.json</b> file once. It's saved privately in your room, so every device you sign in on has it.</p><label class="btn gold" style="cursor:pointer">Load monster pack<input type="file" accept="application/json,.json" id="packFile" hidden></label></div>`:""}
    ${lib.items.length>24?(()=>{const fams=[...new Set(lib.items.map(L=>L.origin))].sort();return `<div class="row" style="gap:8px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
@@ -1015,7 +1018,7 @@ function lichPanel(f){
      ${L.book?`<span class="dim" style="font-size:11px">${esc(L.book)}</span>`:""}
      <span class="eyebrow">${esc(L.origin)}${set==="lich"?" lich":""}${L.cr!=null?` · 5e CR ${L.cr<1?"½":L.cr}`:""}</span>${(()=>{const R=monRec(L),cf=F,d=cf-R.floor;return `<div class="recbox" title="${R.est?"Estimated from its tier":"From its 5e CR "+R.cr}"><b>Best: ${recTxt(R)}</b>${R.est?` <i>est.</i>`:""}${Math.abs(d)>=2?`<small>${d>0?"Easier":"Tougher"} than usual for Floor ${cf}. It still scales to your floor.</small>`:`<small>Good fit for Floor ${cf}.</small>`}</div>`})()}<p style="margin:0;font-size:13.5px" class="muted">${esc(L.concept)}</p>
      ${L.traits?`<p style="margin:0;font-size:12px" class="dim">${L.traits.length} traits · ${L.attacks.length} attacks</p>`:""}
-     <div><button class="btn sm gold" data-act="lichUse" data-set="${set}" data-k="${i}">Forge this ${L.kind==="Mob"?"Mob":"Boss"}</button></div></div>`).join("")}</div>${shown.length>lim?`<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-act="libMore">Show more (${shown.length-lim} left)</button></div>`:""}`})()}</section>`;
+     <div><button class="btn sm gold" data-act="lichUse" data-set="${set}" data-k="${i}">Forge as ${tier?esc((BOSS_TYPES.find(x=>x[0]===tier)||[0,tier])[1]):L.kind==="Mob"?"Mob":"Boss"}</button></div></div>`).join("")}</div>${shown.length>lim?`<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-act="libMore">Show more (${shown.length-lim} left)</button></div>`:""}`})()}</section>`;
 }
 /* ===================== VIEW: ENCOUNTERS ===================== */
 function vEnc(f){
@@ -1189,7 +1192,8 @@ document.addEventListener("click",async e=>{
    case "dupMob":{const m=f.mobs.find(x=>x.id===S.mobSel);const c=JSON.parse(JSON.stringify(m));c.id=uid();c.name+=" (copy)";f.mobs.push(c);S.mobSel=c.id;break}
    case "delMob":{const id=S.mobSel;f.mobs=f.mobs.filter(x=>x.id!==id);[...f.neighborhoods,...f.quests].forEach(x=>{x.mobs=x.mobs.filter(y=>y!==id);if(x.boss===id)x.boss=""});S.confirm=null;break}
    case "addAtk":{const m=f.mobs.find(x=>x.id===S.mobSel);m.attacks.push({name:"",stat:"STR",die:6,type:"",range:"5ft",area:false,rider:false,effect:""});break}
-   case "spread":{const m=f.mobs.find(x=>x.id===S.mobSel);spread(m,el.dataset.k);break}
+   case "spread":{const m=f.mobs.find(x=>x.id===S.mobSel);spread(m,el.dataset.k);m.role=el.dataset.k;break}
+   case "promote":{const m=f.mobs.find(x=>x.id===S.mobSel);if(!m)return;promoteMob(m,el.dataset.k,+m.floor||+f.number);toast(`${m.name} is now a Level ${m.level} ${bossLabel(m)}`);break}
    case "copyTo":copyTo(el.dataset.kind,+el.dataset.i);return;
    case "copyFloor":copyFloor($("#copyFloorNum")?.value);return;
    case "lichPick":S.lichOpen=!S.lichOpen;renderMain();return;
@@ -1328,7 +1332,7 @@ document.addEventListener("click",async e=>{
    case "lootAddAll":{const L=lootState();const n=L.res.length;let w="";L.res.forEach(it=>w=lootAdd(f,it));L.res=[];toast(`${n} items added${w?" to "+w:""}`);break}
    case "libSet":S.libSet=el.dataset.k;S.libQ="";S.libFam="";S.libKind="";S.libLim=30;renderMain();return;
    case "libMore":S.libLim=(S.libLim||30)+30;renderMain();return;
-   case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,S.lichTier||L.tier||"City",+f.number||3);{const R=monRec(L);m.recFloor=R.floor;m.notes=`Recommended: ${recTxt(R)}${R.est?" (estimated)":""}.${m.notes?" "+m.notes:""}`}if(!m.img&&upArt(L))m.img=upArt(L);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
+   case "lichUse":{const L=LIBRARY[el.dataset.set||"lich"].items[+el.dataset.k];const m=lichBoss(L,BOSS_TIERS[S.lichTier]?S.lichTier:(L.tier||"City"),+f.number||3);m.role=L.role||m.role;if(S.lichTier)promoteMob(m,S.lichTier,+f.number||3);{const R=monRec(L);m.recFloor=R.floor;m.notes=`Recommended: ${recTxt(R)}${R.est?" (estimated)":""}.${m.notes?" "+m.notes:""}`}if(!m.img&&upArt(L))m.img=upArt(L);f.mobs.push(m);S.mobSel=m.id;S.lichOpen=false;toast(`${m.name} forged at Lv ${m.level}`);break}
    case "genType":S.gen.type=el.dataset.k;S.gen.res=null;S.gen.locks={};S.gen.full=null;S.gen.err="";renderMain();return;
    case "genRoll":{const g=S.gen,F=+f.number||3,fresh=rollAll(g.type,F,genFlavor(f));
      if(g.res&&g.resType===g.type){Object.keys(fresh).forEach(k=>{if(g.locks[k])fresh[k]=g.res[k]});if(g.locks.type&&!g.locks.stages&&g.type==="quest")fresh.stages=rollField("quest","stages",{F,flavor:genFlavor(f),cur:fresh})}
@@ -1451,6 +1455,25 @@ function monRec(L){const boss=L.kind!=="Mob";let cr=L.cr!=null&&L.cr!==""?+L.cr:
   const pl=boss?Math.max(1,Math.round(cr)):Math.max(1,Math.round(cr*1.5)+1);
   const fl=pl<=20?Math.floor(pl/2)+1:Math.min(18,11+Math.ceil((pl-20)*0.7));
   const r=LEVEL_ROWS[rowIdxForFloor(fl)];return {floor:fl,lv:[r.min,r.max],cr,est}}
+/* Turn any monster into any Boss type from the books (or back into a Mob).
+   Tiers and kill rewards: Crawlers & Customization p.43. "Dungeon Boss" isn't its own tier in the books: it uses Neighborhood Boss numbers. */
+const BOSS_TYPES=[["Mob","Mob",0],["Neighborhood","Neighborhood Boss",1],["Borough","Borough Boss",2],["City","City Boss",3],["Province","Province Boss",4],["Country","Country Boss",5],["Floor","Floor Boss",6],["Dungeon","Dungeon Boss",1]];
+const ROLE_W={brute:{STR:4,CON:3,DEX:2,INT:.5,CHA:.5},skirm:{DEX:4,STR:2,CON:2,INT:1.5,CHA:.5},caster:{INT:4,DEX:2,CON:2,CHA:1.5,STR:.5},face:{CHA:4,INT:2.5,DEX:2,CON:1,STR:.5},even:{STR:1,INT:1,CON:1,DEX:1,CHA:1}};
+function inferRole(st){const v=STATS.map(s=>+st?.[s]||0),n=Math.hypot(...v)||1;let best="even",bs=-1;
+  Object.entries(ROLE_W).forEach(([k,w])=>{const wv=STATS.map(s=>w[s]),wn=Math.hypot(...wv),sc=v.reduce((a,x,i)=>a+x*wv[i],0)/(n*wn);if(sc>bs+1e-9){bs=sc;best=k}});return best}
+const bossTypeOf=m=>m.kind==="Boss"?(m.bossType==="Dungeon"&&m.tier==="Neighborhood"?"Dungeon":(m.tier||"Neighborhood")):"Mob";
+const bossLabel=m=>m.kind==="Boss"?(BOSS_TYPES.find(x=>x[0]===bossTypeOf(m))||[0,(m.tier||"")+" Boss"])[1]:(m.kind==="Elite"?"Elite":"Mob");
+function promoteMob(m,type,fl){fl=+fl||+m.floor||+F()?.number||1;const T=BOSS_TYPES.find(x=>x[0]===type);if(!T)return m;
+  const role=m.role||inferRole(m.stats);m.floor=fl;m.homeFloor="";
+  if(type==="Mob"){const r=LEVEL_ROWS[rowIdxForFloor(fl)];m.kind="Mob";m.level=Math.round((r.min+r.max)/2);delete m.bossType}
+  else{const t=type==="Dungeon"?"Neighborhood":type,[a,b]=bossRange(fl,t);m.kind="Boss";m.tier=t;m.bossType=type;m.level=Math.round((a+b)/2)}
+  spread(m,role);m.role=role;
+  m.notes=String(m.notes||"").replace(/\s*Kill reward: each crawler gains \d+ levels? \(Crawlers p\.43\)\./g,"").replace(/\s*Dungeon Boss: uses Neighborhood Boss numbers\./g,"").trim();
+  if(T[2])m.notes=(m.notes?m.notes+" ":"")+`Kill reward: each crawler gains ${T[2]} level${T[2]>1?"s":""} (Crawlers p.43).`+(type==="Dungeon"?" Dungeon Boss: uses Neighborhood Boss numbers.":"");
+  return m}
+function promoteChoices(m,fl){return BOSS_TYPES.map(([k,l,rw])=>{const t=k==="Dungeon"?"Neighborhood":k,cur=bossTypeOf(m)===k&&(k!=="Mob"||m.kind!=="Elite");
+  const lv=k==="Mob"?(()=>{const r=LEVEL_ROWS[rowIdxForFloor(fl)];return `${r.min}–${r.max}`})():bossRange(fl,t).join("–"),hb=k==="Mob"?"up to 10":BOSS_TIERS[t].hb+fl;
+  return `<button class="promobtn ${cur?"on":""}" data-act="promote" data-k="${k}" aria-pressed="${cur}"><b>${l}</b><span>Lv ${lv} · ${hb} HB slots${rw?` · kill: +${rw} lvl`:""}</span></button>`}).join("")}
 const recTxt=R=>`Floor ${R.floor} · crawlers Lv ${R.lv[0]}–${R.lv[1]}`;
 function lichBoss(L,tier,fl){
   if(L.kind==="Mob"){const m=blankMob("Mob"),r=LEVEL_ROWS[rowIdxForFloor(fl)];const lv=L.lv==="low"?r.min:L.lv==="high"?r.max:Math.round((r.min+r.max)/2);
@@ -2880,7 +2903,7 @@ const R20_TYPES=new RegExp("\\b("+TYPE_WORDS+")\\b","i");
 function r20Defs(traits){const txt=(traits||[]).map(t=>`${t.name}: ${t.text}`).join(". "),pick=re=>{const m=txt.match(re);return m?(m[1].match(new RegExp(TYPE_WORDS,"gi"))||[]).map(normType).join(", "):""};
   return {immune:pick(/Immune:\s*([^.]+)/i),resist:pick(/Resists?(?:\s*\(half\))?:\s*([^.]+)/i),vuln:pick(/Vulnerab\w*(?:\s*\(double\))?:\s*([^.]+)/i)}}
 function r20Mob(m,f){const c=mobCalc({...m,floor:m.floor||f.number}),d=r20Defs(m.traits);
-  return {kind:"monster",name:m.name||"Unnamed",mobKind:c.isBoss?"Boss":"Mob",tier:c.isBoss?m.tier:"",level:c.L,floor:c.Fl,size:m.size,type:m.type,move:m.move,
+  return {kind:"monster",role:m.role||inferRole(m.stats),name:m.name||"Unnamed",mobKind:c.isBoss?"Boss":"Mob",tier:c.isBoss?m.tier:"",bossType:c.isBoss?bossTypeOf(m):"",level:c.L,floor:c.Fl,size:m.size,type:m.type,move:m.move,
     stats:Object.fromEntries(STATS.map(s=>[s,+m.stats?.[s]||0])),hbMax:c.slots,hb:c.slots,armor:c.dr,...d,
     attacks:c.attacks.map(a=>({name:a.name||"Attack",stat:a.stat||"STR",rank:0,dice:String(a.dmg).split("+")[0],dmgStat:a.stat||"STR",type:a.type||"",range:a.range||"",area:!!a.area,effect:a.effect||""})),
     traits:(m.traits||[]).filter(t=>t.name||t.text).map(t=>`${t.name}. ${t.text}`).join("\n\n")+(c.isBoss?"\n\nBoss: takes 1 action per crawler, even after one dies.":""),
