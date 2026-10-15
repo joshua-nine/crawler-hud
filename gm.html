@@ -428,6 +428,7 @@ body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
 }
 
 .promo{display:grid;gap:6px}.promogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.promobtn{display:grid;gap:2px;text-align:left;background:var(--panel2,#141d36);border:1px solid var(--line);border-radius:10px;padding:7px 9px;color:inherit;cursor:pointer;font:inherit}.promobtn b{font-size:13px}.promobtn span{font-size:11.5px;color:var(--muted)}@media (hover:hover){.promobtn:hover{border-color:var(--gold)}}.promobtn.on{border-color:var(--gold);background:rgba(216,178,90,.13)}.promobtn.on b{color:var(--gold)}
+.wherecell{display:grid;gap:6px;min-width:0;width:100%}.wherecell>*{width:100%;min-width:0}.givesel{font-size:13px}
 .recbox{border:1px solid var(--line);border-left:3px solid var(--gold,#d8b25a);border-radius:8px;padding:5px 8px;font-size:12.5px;display:grid;gap:1px}.recbox i{color:var(--dim,#9aa3bd);font-size:11px}.recbox small{color:var(--dim,#9aa3bd);font-size:11.5px}
 </style>
 
@@ -1124,13 +1125,14 @@ document.addEventListener("change",e=>{
   if(t.id==="floorSel"){S.cur=t.value;S.confirm=null;renderAll();return}
   if(t.id==="importFile"){importFile(t.files[0]);return}
   if(t.dataset.img&&t.type==="file"){handleImage(t);return}
+  if(t.dataset.give!=null){const f=F(),l=f?.loot?.[+t.dataset.give],c=S.sheets[t.value];if(l&&c){giveItem(c,l);l.given=true;l.to=c.id;l.where="Given to "+c.name;scheduleSave();renderMain();toast(`${l.n} is in ${c.name}'s inventory${S.live?.role==="gm"?" · sent to their phone":""}`)}return}
   if(t.id==="autoSpeak"){setSound(t.checked);if(t.checked)speakAs("System messages will be read aloud.","system");return}
   if(t.id==="packFile"){const f0=t.files[0];t.value="";if(f0)loadPackFile(f0);return}
   if(t.id==="libKind"||t.id==="libFam"||t.id==="libFit"){S[t.id]=t.value;S.libLim=30;renderMain();return}
   if(t.id==="restoreFile"){const f0=t.files[0];t.value="";if(f0)restoreBackup(f0);return}
   if(t.id==="genFlavor"){S.gen.flavor=t.value;return}
   if(t.id==="genTarget"){S.gen.target=t.value;return}
-  const lootSel={lootBox:"box",lootSlot:"slot",lootSrc:"src",lootTarget:"target",lootFBox:"fbox",lootFSlot:"fslot",lootFSrc:"fsrc"}[t.id];if(lootSel){const L=lootState();L[lootSel]=t.value;if(lootSel[0]==="f")L.lim=48;if(lootSel!=="target")keepFocus(renderMain);return}
+  const lootSel={lootBox:"box",lootSlot:"slot",lootSrc:"src",lootTarget:"target",lootFBox:"fbox",lootFSlot:"fslot",lootFSrc:"fsrc"}[t.id];if(lootSel){const L=lootState();L[lootSel]=t.value;if(lootSel[0]==="f")L.lim=48;keepFocus(renderMain);return}
   if(t.id==="sheetImport"){const file=t.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!d.stats||!d.attacks)throw 0;const x=normSheet({...d,id:"c"+uid()});S.sheets[x.id]=x;S.sheetSel=x.id;saveSheet(x.id);renderAll();toast("Sheet imported")}catch(_){toast("That file isn't a Floor Builder sheet")}};rd.readAsText(file);t.value="";return}
   if(t.dataset.pick){S.pick=S.pick||{};S.pick[t.dataset.pick]=t.checked;if(S.confirm==="delMany")S.confirm=null;renderManage();return}
   if(t.id==="pickAll"){S.pick={};if(t.checked)Object.keys(S.floors).forEach(id=>S.pick[id]=true);S.confirm=null;renderManage();return}
@@ -1329,7 +1331,7 @@ document.addEventListener("click",async e=>{
    case "lootClear":lootState().res=[];renderMain();return;
    case "lootMore":lootState().lim+=48;renderMain();return;
    case "lootAdd":{const L=lootState(),it=el.dataset.from==="roll"?L.res[+el.dataset.i]:ITEMS.items[+el.dataset.i];if(!it)return;const w=lootAdd(f,it);
-     if(el.dataset.from==="roll")L.res.splice(+el.dataset.i,1);toast(`${it.n} added${w?" to "+w:" to Floor "+f.number+" loot"}`);break}
+     if(el.dataset.from==="roll")L.res.splice(+el.dataset.i,1);toast(String(L.target||"").startsWith("pc:")&&w?`${it.n} is in ${w}'s inventory${S.live?.role==="gm"?" · sent to their phone":""}`:`${it.n} added${w?" to "+w:" to Floor "+f.number+" loot"}`);break}
    case "lootAddAll":{const L=lootState();const n=L.res.length;let w="";L.res.forEach(it=>w=lootAdd(f,it));L.res=[];toast(`${n} items added${w?" to "+w:""}`);break}
    case "libSet":S.libSet=el.dataset.k;S.libQ="";S.libFam="";S.libKind="";S.libLim=30;renderMain();return;
    case "libMore":S.libLim=(S.libLim||30)+30;renderMain();return;
@@ -1512,8 +1514,9 @@ function itemCard(it,i,from){return `<div class="card itm box-${it.b.toLowerCase
   <div class="mono dim" style="font-size:12px">Gear Slot: ${esc(it.s)}</div>
   <p style="margin:0;font-size:14px;line-height:1.45">${esc(it.fx)}</p>
   <div class="row" style="justify-content:space-between;align-items:center"><span class="dim" style="font-size:11px">${esc(ITEMS.src[it.src])}${it.p?", p."+it.p:""}</span>
-  <span class="row" style="gap:6px">${from==="roll"?`<button class="btn sm ghost" data-act="lootReroll" data-i="${i}" title="Reroll this one">↻</button>`:""}<button class="btn sm gold" data-act="lootAdd" data-n="${esc(it.n)}" data-from="${from}" data-i="${i}">+ Add</button></span></div></div>`}
-function lootTargets(f){return `<option value="floor">Floor loot list only</option>${f.neighborhoods.map(n=>`<option value="nb:${n.id}">Neighborhood: ${esc(n.name)}</option>`).join("")}${f.quests.map(q=>`<option value="q:${q.id}">Quest: ${esc(q.name)}</option>`).join("")}`}
+  <span class="row" style="gap:6px">${from==="roll"?`<button class="btn sm ghost" data-act="lootReroll" data-i="${i}" title="Reroll this one">↻</button>`:""}<button class="btn sm gold" data-act="lootAdd" data-n="${esc(it.n)}" data-from="${from}" data-i="${i}">${(()=>{const t=lootState().target||"";const c=t.startsWith("pc:")&&S.sheets[t.slice(3)];return c?"Give to "+esc(c.name||"crawler"):"+ Add"})()}</button></span></div></div>`}
+const crawlerSheets=()=>Object.values(S.sheets).filter(c=>c.kind!=="creature").sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+function lootTargets(f){const pcs=crawlerSheets();return `<option value="floor">Floor loot list only</option>${pcs.length?`<optgroup label="Give straight to a crawler">${pcs.map(c=>`<option value="pc:${c.id}">${esc(c.name||"Crawler")}</option>`).join("")}</optgroup>`:""}${f.neighborhoods.map(n=>`<option value="nb:${n.id}">Neighborhood: ${esc(n.name)}</option>`).join("")}${f.quests.map(q=>`<option value="q:${q.id}">Quest: ${esc(q.name)}</option>`).join("")}`}
 function selOpts(vals,cur,anyLbl){return `<option value="any"${cur==="any"?" selected":""}>${anyLbl}</option>`+vals.map(([v,l])=>`<option value="${esc(v)}"${String(cur)===String(v)?" selected":""}>${esc(l)}</option>`).join("")}
 function browseList(){const L=lootState(),all=itemPool(L.fbox,L.fslot,L.fsrc,L.q),show=all.slice(0,L.lim);
   return `<div class="dim" style="font-size:12px;margin-bottom:8px">${all.length} item${all.length===1?"":"s"}${all.length>show.length?`, showing ${show.length}`:""}</div>
@@ -1526,14 +1529,14 @@ function vLoot(f){const L=lootState(),w=BOX_W(+f.number||1);
     <td><div class="row" style="gap:10px;align-items:flex-start;flex-wrap:nowrap">${l.img?`<button class="imgthumb sm" data-act="imgView" data-imgt="floor" data-img="loot.${i}.img" aria-label="View ${esc(l.n)} full size"><img src="${esc(l.img)}" alt=""></button>`:""}<div style="flex:1;min-width:0"><b>${esc(l.n)}</b><div class="dim" style="font-size:12px">${esc(l.fx)}</div><div class="dim mono" style="font-size:11px">Gear Slot: ${esc(l.s)} · ${esc(l.src)}${l.p?" p."+esc(l.p):""}</div>
       <div class="row" style="gap:6px;margin-top:4px"><label class="linkish" style="cursor:pointer;font-size:12px">${l.img?"Change art":"＋ Add art"}<input type="file" accept="image/*" data-img="loot.${i}.img" data-imgt="floor" data-imgk="item" hidden></label>${l.img?`<button class="linkish" style="font-size:12px" data-act="imgClear" data-img="loot.${i}.img" data-imgt="floor">Remove</button>`:""}</div></div></div></td>
     <td><span class="pill bx box-${String(l.b).toLowerCase()}">${esc(l.b)}</span></td>
-    <td><input type="text" data-p="loot.${i}.where" value="${esc(l.where||"")}" placeholder="Where / who drops it"></td>
+    <td><div class="wherecell"><input type="text" data-p="loot.${i}.where" value="${esc(l.where||"")}" placeholder="Where / who drops it"><select class="givesel" data-give="${i}" aria-label="Give ${esc(l.n)} to a crawler"><option value="">${l.to&&S.sheets[l.to]?"Given to "+esc(S.sheets[l.to].name)+" · give again…":"Give to a crawler…"}</option>${crawlerSheets().map(c=>`<option value="${c.id}">${esc(c.name||"Crawler")}</option>`).join("")}</select></div></td>
     <td><button class="x" data-act="del" data-p="loot" data-i="${i}" aria-label="Remove">✕</button></td></tr>`).join("");
   return `<section class="panel"><header><h2>Roll loot</h2><span class="dim" style="font-size:12px">Floor ${esc(f.number)} odds: ${BOXES.map((b,i)=>w[i]?`${b} ${w[i]}%`:"").filter(Boolean).join(" · ")}</span></header>
    <div class="row">
     <label class="f"><span>Box</span><select id="lootBox">${boxOpts}</select></label>
     <label class="f"><span>Gear slot</span><select id="lootSlot">${selOpts(slotV,L.slot,"Any slot")}</select></label>
     <label class="f"><span>Book</span><select id="lootSrc">${selOpts(srcV,L.src,"All books")}</select></label>
-    <label class="f"><span>Send to</span><select id="lootTarget">${lootTargets(f).replace(`value="${L.target}"`,`value="${L.target}" selected`)}</select></label>
+    <label class="f"><span>Send to (or give to a crawler)</span><select id="lootTarget">${lootTargets(f).replace(`value="${L.target}"`,`value="${L.target}" selected`)}</select></label>
    </div>
    <div class="row" style="margin-top:10px"><button class="btn gold" data-act="lootRoll" data-k="1">Roll 1 item</button><button class="btn" data-act="lootRoll" data-k="3">Roll 3</button><button class="btn" data-act="lootRoll" data-k="6">Roll a hoard (6)</button>${L.res.length?`<button class="btn ghost" data-act="lootAddAll">+ Add all ${L.res.length}</button><button class="btn ghost" data-act="lootClear">Clear</button>`:""}</div>
    ${L.res.length?`<div class="grid g3" style="margin-top:12px">${L.res.map((it,i)=>itemCard(it,i,"roll")).join("")}</div>`:`<p class="tip" style="margin-top:10px">"Suggested" rolls a box tier by floor depth, then an item from that tier. Box odds are a starting point. Adjust to your table.</p>`}
@@ -1550,7 +1553,14 @@ function vLoot(f){const L=lootState(),w=BOX_W(+f.number||1);
    </div>
    <div id="lootList">${browseList()}</div>
   </section>`}
+/* Put an item in a crawler's inventory, tell their phone, post to Roll20 */
+function giveItem(c,it){if(!c)return false;const fx=`${it.s?it.s+": ":""}${it.fx||""}`.trim();const ix=c.inv.findIndex(x=>!String(x.item||"").trim());
+  const row={item:it.n,qty:"1",notes:fx};if(ix>=0)c.inv[ix]=row;else c.inv.push(row);saveSheet(c.id);
+  const text=`${c.name||"Crawler"} received ${it.n}${it.b?` (${it.b} box)`:""}. ${it.fx||""}`.trim();
+  livePushEvent({type:"announce",title:"Loot!",text:`You received ${it.n}${it.b?` from a ${it.b} box`:""}! ${it.fx||""}`.trim(),voice:"system",targets:[c.id]});
+  bridge({type:"announce",text});return true}
 function lootAdd(f,it){const L=lootState(),t=L.target||"floor";let where="";
+  if(t.startsWith("pc:")){const c=S.sheets[t.slice(3)];if(c&&giveItem(c,it)){(f.loot=f.loot||[]).push({id:uid(),n:it.n,b:it.b,s:it.s,fx:it.fx,src:typeof it.src==="number"?ITEMS.src[it.src]:it.src,p:it.p,where:"Given to "+c.name,to:c.id,given:true});return c.name}}
   if(t.startsWith("nb:")){const n=f.neighborhoods.find(x=>x.id===t.slice(3));if(n){where=n.name;const ix=n.items.findIndex(x=>!String(x).trim());ix>=0?n.items[ix]=itemLine(it):n.items.push(itemLine(it))}}
   if(t.startsWith("q:")){const q=f.quests.find(x=>x.id===t.slice(2));if(q){where=q.name;const ix=q.items.findIndex(x=>!String(x).trim());ix>=0?q.items[ix]=itemLine(it):q.items.push(itemLine(it))}}
   (f.loot=f.loot||[]).push({id:uid(),n:it.n,b:it.b,s:it.s,fx:it.fx,src:ITEMS.src[it.src],p:it.p,where,given:false});return where}
@@ -2561,22 +2571,44 @@ async function restoreBackup(file){const txt=await file.text();let d;try{d=JSON.
 const IMG_SIZES={portrait:[220,.74],monster:[280,.72],item:[180,.72],map:[2000,.82],mapInline:[1100,.62]};
 function imgPick(target,path,val,kind,label){const big=kind==="map";
   return `<div class="imgpick ${big?"big":""}">${val?`<button class="imgthumb" data-act="imgView" data-imgt="${target}" data-img="${path}" aria-label="View ${esc(label||"image")} full size"><img src="${esc(val)}" alt="${esc(label||"")}"></button>`:big?`<div class="imgempty">No ${esc((label||"map").toLowerCase())} yet</div>`:""}
-   <div class="row" style="gap:6px"><label class="btn sm ${val?"ghost":""}" style="cursor:pointer">${val?"Change":"＋ "+(label||"Image")}<input type="file" accept="image/*" data-img="${path}" data-imgt="${target}" data-imgk="${kind}" hidden></label>${val?`<button class="btn sm ghost danger" data-act="imgClear" data-img="${path}" data-imgt="${target}">Remove</button>`:""}</div></div>`}
+   <div class="row" style="gap:6px"><label class="btn sm ${val?"ghost":""}" style="cursor:pointer">${val?"Change":"＋ "+(label||"Image")}<input type="file" accept="${big?"image/*,application/pdf,.pdf,.heic,.heif":"image/*,.heic,.heif"}" data-img="${path}" data-imgt="${target}" data-imgk="${kind}" hidden></label>${val?`<button class="btn sm ghost danger" data-act="imgClear" data-img="${path}" data-imgt="${target}">Remove</button>`:""}</div></div>`}
 function imgOwner(t){return t==="sheet"?S.sheets[S.sheetSel]:F()}
 function imgSave(t,o){if(t==="sheet")saveSheet(o.id);else scheduleSave()}
-async function shrinkImage(file,max,q){const url=URL.createObjectURL(file);try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
-  const sc=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*sc)),h=Math.max(1,Math.round(im.naturalHeight*sc));
+/* Map files come as PDFs, iPhone HEIC photos and huge PNGs: turn any of them into something a canvas can draw. */
+const IMG_LIBS={pdf:"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",pdfWorker:"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",heic:"https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"};
+const loadScriptOnce=(()=>{const seen={};return src=>seen[src]||(seen[src]=new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>{delete seen[src];rej(Object.assign(new Error("lib"),{code:"lib_load"}))};document.head.appendChild(s)}))})();
+const isPdf=f=>f.type==="application/pdf"||/\.pdf$/i.test(f.name||"");
+const isHeic=f=>/heic|heif/i.test(f.type||"")||/\.(heic|heif)$/i.test(f.name||"");
+async function pdfToBlob(file){await loadScriptOnce(IMG_LIBS.pdf);const lib=window.pdfjsLib;lib.GlobalWorkerOptions.workerSrc=IMG_LIBS.pdfWorker;
+  const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;let n=1;
+  if(doc.numPages>1){const a=prompt(`This PDF has ${doc.numPages} pages. Which page is the map?`,"1");if(a===null)throw Object.assign(new Error("cancel"),{code:"cancel"});n=Math.min(doc.numPages,Math.max(1,parseInt(a,10)||1))}
+  const pg=await doc.getPage(n),v1=pg.getViewport({scale:1}),sc=Math.min(4,2400/Math.max(v1.width,v1.height)),vp=pg.getViewport({scale:sc});
+  const cv=document.createElement("canvas");cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);await pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+  return await new Promise(r=>cv.toBlob(r,"image/jpeg",.9))}
+async function decodeImage(file){const url=URL.createObjectURL(file);
+  try{return await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res({src:i,w:i.naturalWidth,h:i.naturalHeight});i.onerror=rej;i.src=url})}
+  catch(_){if(window.createImageBitmap){try{const bm=await createImageBitmap(file);return {src:bm,w:bm.width,h:bm.height}}catch(_){}}throw Object.assign(new Error("decode"),{code:"decode"})}
+  finally{setTimeout(()=>URL.revokeObjectURL(url),0)}}
+async function toDrawable(file){if(isPdf(file))return pdfToBlob(file);
+  if(isHeic(file)){try{await decodeImage(file);return file}catch(_){await loadScriptOnce(IMG_LIBS.heic);const out=await window.heic2any({blob:file,toType:"image/jpeg",quality:.9});return Array.isArray(out)?out[0]:out}}
+  return file}
+async function shrinkImage(file,max,q){const d=await decodeImage(file),im=d.src;try{
+  const sc=Math.min(1,max/Math.max(d.w,d.h)),w=Math.max(1,Math.round(d.w*sc)),h=Math.max(1,Math.round(d.h*sc));
   const cv=document.createElement("canvas");cv.width=w;cv.height=h;const g=cv.getContext("2d");g.fillStyle="#0a1020";g.fillRect(0,0,w,h);g.drawImage(im,0,0,w,h);
-  return {dataUrl:cv.toDataURL("image/jpeg",q),blob:await new Promise(r=>cv.toBlob(r,"image/jpeg",q))}}finally{URL.revokeObjectURL(url)}}
-async function handleImage(input){const file=input.files&&input.files[0];input.value="";if(!file)return;if(!/^image\//.test(file.type)){toast("That isn't an image");return}
-  const t=input.dataset.imgt,path=input.dataset.img,kind=input.dataset.imgk||"portrait",o=imgOwner(t);if(!o)return;toast("Adding image…");
-  try{let val="";
+  return {dataUrl:cv.toDataURL("image/jpeg",q),blob:await new Promise(r=>cv.toBlob(r,"image/jpeg",q))}}finally{if(im.close)im.close()}}
+async function handleImage(input){let file=input.files&&input.files[0];input.value="";if(!file)return;
+  if(!/^image\//.test(file.type)&&!isPdf(file)&&!isHeic(file)){toast("That file type can't be used. Use a JPG, PNG, WebP, HEIC"+(input.dataset.imgk==="map"?" or PDF.":"."));return}
+  if(file.size>80*1024*1024){toast("That file is over 80 MB. Export a smaller JPG or PNG and try again.");return}
+  const t=input.dataset.imgt,path=input.dataset.img,kind=input.dataset.imgk||"portrait",o=imgOwner(t);if(!o)return;toast(isPdf(file)?"Reading the PDF…":"Adding image…");
+  try{file=await toDrawable(file);let val="",note="";
     if(kind==="map"){let assets=null;try{assets=await window.claude?.use?.("assets")}catch(_){assets=null}
-      if(assets){const {blob}=await shrinkImage(file,...IMG_SIZES.map);const r=await assets.upload(blob);val=r.url}
-      else{val=(await shrinkImage(file,...IMG_SIZES.mapInline)).dataUrl}}
+      if(assets){try{const {blob}=await shrinkImage(file,...IMG_SIZES.map);const r=await assets.upload(blob);val=r.url}
+        catch(e){if(e?.code==="cancel")throw e;note=" (saved inside the floor instead of image storage)";val=""}}
+      if(!val)val=(await shrinkImage(file,...IMG_SIZES.mapInline)).dataUrl}
     else val=(await shrinkImage(file,...(IMG_SIZES[kind]||IMG_SIZES.portrait))).dataUrl;
-    setPath(o,path,val);imgSave(t,o);renderMain();toast("Image added")}
-  catch(e){toast(e?.code==="quota_exceeded"?"Image storage is full. Remove some maps first.":e?.code==="not_granted"||e?.code==="not_writer"?"You can't add maps in this view":"Couldn't add that image. Try a JPG or PNG.")}}
+    setPath(o,path,val);imgSave(t,o);renderMain();toast((kind==="map"?"Map added":"Image added")+note)}
+  catch(e){const c=e?.code;if(c==="cancel")return;
+    toast(c==="lib_load"?"Couldn't load the PDF/HEIC reader. Check your internet connection, or export the map as a JPG.":c==="decode"?"That image couldn't be opened. It may be damaged or too large. Export it as a JPG and try again.":/password/i.test(e?.message||"")?"That PDF is password-protected. Remove the password or export the page as a JPG.":"Couldn't add that file: "+String(e?.message||e).slice(0,80))}}
 
 
 /* ===================== VOICES (browser speech, free) ===================== */
