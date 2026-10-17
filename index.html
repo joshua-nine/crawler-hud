@@ -430,6 +430,7 @@ body.player .ddb-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:0}
 
 .promo{display:grid;gap:6px}.promogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.promobtn{display:grid;gap:2px;text-align:left;background:var(--panel2,#141d36);border:1px solid var(--line);border-radius:10px;padding:7px 9px;color:inherit;cursor:pointer;font:inherit}.promobtn b{font-size:13px}.promobtn span{font-size:11.5px;color:var(--muted)}@media (hover:hover){.promobtn:hover{border-color:var(--gold)}}.promobtn.on{border-color:var(--gold);background:rgba(216,178,90,.13)}.promobtn.on b{color:var(--gold)}
 .wherecell{display:grid;gap:6px;min-width:0;width:100%}.wherecell>*{width:100%;min-width:0}.givesel{font-size:13px}
+.petstats{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}
 .recbox{border:1px solid var(--line);border-left:3px solid var(--gold,#d8b25a);border-radius:8px;padding:5px 8px;font-size:12.5px;display:grid;gap:1px}.recbox i{color:var(--dim,#9aa3bd);font-size:11px}.recbox small{color:var(--dim,#9aa3bd);font-size:11.5px}
 </style>
 
@@ -1210,6 +1211,7 @@ document.addEventListener("click",async e=>{
    case "sheetDelYes":{const c=S.sheets[S.sheetSel];S.confirm=null;await deleteSheet(c.id);renderAll();toast("Sheet deleted");return}
    case "sheetExport":{const c=S.sheets[S.sheetSel];await saveBytes(`${String(c.name).replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-sheet.json`,JSON.stringify(c,null,2),"application/json");return}
    case "sheetPdf":{const c=S.sheets[S.sheetSel];el.disabled=true;try{await fillOfficialPdf(c)}catch(e){toast("Couldn't fill the PDF")}el.disabled=false;return}
+   case "petRescale":{const c=S.sheets[S.sheetSel],k=c&&RC_CLASSES.find(x=>x.id===c.pet?.summon);if(!k){toast("Load the pack that has this class first");return}setSummon(c,k);saveSheet(c.id);renderMain();toast(`${c.pet.name} is now Level ${c.pet.level}`);return}
    case "hbToggle":{const c=S.sheets[S.sheetSel];const who=el.dataset.who;const a=who?c[who].hbLost:c.hbLost,i=+el.dataset.i;a[i]=!a[i];saveSheet(c.id);if(document.querySelector(".ddb")){renderMain();return}el.classList.toggle("lost",a[i]);updateSheetDerived();return}
    case "hbHeal":{const c=S.sheets[S.sheetSel];let n=+el.dataset.k;const sl=Math.max(1,+c.hbSlots||10);{const dr=+((String(c.debuffs||"").match(/Drained ×(\d+)/)||[])[1]||0),lost=c.hbLost.slice(0,sl).filter(Boolean).length;if(dr&&lost-dr<n){n=Math.max(0,lost-dr);toast(n?`Healed ${n}. ${dr} slot${dr>1?"s are":" is"} Drained until a Long Rest`:`Those slots are Drained. Only a Long Rest clears them`)}}for(let i=sl-1;i>=0&&n>0;i--)if(c.hbLost[i]){c.hbLost[i]=false;n--}
      for(let i=0;i<sl&&n>0;i++)if(c.hbLost[i]){c.hbLost[i]=false;n--}saveSheet(c.id);renderMain();return}
@@ -1711,7 +1713,7 @@ function sheetEditor(c){const k=sheetCalc(c),isC=c.kind==="crawler",o=x=>"sh"+x;
    ${sec(o("inv"),"Inventory",`${filledN(c.inv)} of 20`,filledN(c.inv),`<div class="tbl"><table class="t"><thead><tr><th>Item</th><th>Qty</th><th>Notes</th></tr></thead><tbody>${c.inv.map((s,i)=>`<tr><td>${cin(`inv.${i}.item`,s.item)}</td><td>${cin(`inv.${i}.qty`,s.qty,"","56px")}</td><td>${cin(`inv.${i}.notes`,s.notes)}</td></tr>`).join("")}</tbody></table></div>
      <p class="dim" style="font-size:12px;margin:6px 0 0">Tip: items rolled on the Loot tab can be pasted here.</p>`)}
    ${sec(o("pet"),"Pet & mount / vehicle","",c.pet.name||c.pet.level||c.mount.size,`<div class="grid g2" style="gap:16px;align-items:start">
-     <div><div class="eyebrow">Pet</div><label class="f"><span>Name</span>${cin("pet.name",c.pet.name)}</label>
+     <div><div class="eyebrow">${c.pet.summon?"Summon":"Pet"}</div>${summonBar(c)}<label class="f"><span>Name</span>${cin("pet.name",c.pet.name)}</label>
       <div class="row" style="gap:3px;margin:6px 0">${c.pet.hbLost.map((l,i)=>`<button class="hbs sm ${l?"lost":""}" data-act="hbToggle" data-who="pet" data-i="${i}" style="--h:${12*i}"><span>${k.petHb}</span></button>`).join("")}</div>
       <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:6px">${["STR","INT","CON","DEX","CHA","level","dr","evade","move","size"].map(p=>`<label class="f"><span>${p.length===3&&p===p.toUpperCase()?p:p[0].toUpperCase()+p.slice(1)}</span>${cin("pet."+p,c.pet[p])}</label>`).join("")}</div>
       ${[["atk1","Attack"],["atk2","Attack"],["special","Special"]].map(([p,l])=>`<label class="f"><span>${l}</span>${cin("pet."+p,c.pet[p])}</label>`).join("")}</div>
@@ -2356,7 +2358,10 @@ function ddbStory(c){return `<div class="grid g2" style="gap:10px"><label class=
    <h3 class="ddb-h">Floor history</h3>${(c.history||[]).length?`<ol class="hist">${c.history.slice().reverse().map(h=>`<li>${esc(h)}</li>`).join("")}</ol>`:`<p class="muted">Nothing yet.</p>`}`}
 function ddbExtras(c){return `<div class="grid g2" style="gap:10px"><label class="f"><span>Popularity (from Floor 2)</span>${cin("popularity",c.popularity)}</label><label class="f"><span>Deity</span>${cin("deity",c.deity)}</label></div>
    <h3 class="ddb-h">Sponsors</h3><div class="gearg">${c.sponsors.map((s,i)=>cin(`sponsors.${i}`,s,`Sponsor ${i+1}`)).join("")}</div>
-   <h3 class="ddb-h">Pet</h3><div class="gearg"><label class="f"><span>Name</span>${cin("pet.name",c.pet.name)}</label><label class="f"><span>Level</span>${cin("pet.level",c.pet.level)}</label><label class="f"><span>Attack 1</span>${cin("pet.atk1",c.pet.atk1)}</label><label class="f"><span>Special</span>${cin("pet.special",c.pet.special)}</label></div>
+   <h3 class="ddb-h">${c.pet.summon?"Summon":"Pet"}</h3>${summonBar(c)}<div class="gearg"><label class="f"><span>Name</span>${cin("pet.name",c.pet.name)}</label><label class="f"><span>Level</span>${cin("pet.level",c.pet.level)}</label></div>
+   ${c.pet.name?`<div class="row" style="gap:3px;margin:8px 0;flex-wrap:wrap">${c.pet.hbLost.map((l,i)=>`<button class="hbs sm ${l?"lost":""}" data-act="hbToggle" data-who="pet" data-i="${i}" style="--h:${12*i}"><span>${sheetCalc(c).petHb}</span></button>`).join("")}</div>
+   <div class="petstats">${["STR","INT","CON","DEX","CHA","dr","evade","move","size"].map(p=>`<label class="f"><span>${p.length===3&&p===p.toUpperCase()?p:p==="dr"?"DR":p[0].toUpperCase()+p.slice(1)}</span>${cin("pet."+p,c.pet[p])}</label>`).join("")}</div>
+   <div class="grid" style="gap:8px;margin-top:8px"><label class="f"><span>Attack 1</span>${cta("pet.atk1",c.pet.atk1,2)}</label><label class="f"><span>Attack 2</span>${cta("pet.atk2",c.pet.atk2,2)}</label><label class="f"><span>Special</span>${cta("pet.special",c.pet.special,2)}</label></div>`:`<p class="dim" style="font-size:13px">No pet yet. Summoner classes give you one.</p>`}
    <h3 class="ddb-h">Mount / vehicle</h3><div class="gearg"><label class="f"><span>Name</span>${cin("mount.name",c.mount.name)}</label><label class="f"><span>Move</span>${cin("mount.move",c.mount.move)}</label></div>
    <h3 class="ddb-h">Kills</h3><div class="gearg">${c.kills.map((s,i)=>cin(`kills.${i}`,s,"")).slice(0,8).join("")}</div>`}
 function sheetPlay(c){const k=sheetCalc(c),t=S.ddbTab||"actions";
@@ -2503,7 +2508,16 @@ function applyClass(c,k){Object.entries(k.stats||{}).forEach(([s,n])=>bumpStat(c
   (k.skills||[]).forEach(([n,rk,st,chk,note])=>addSkill(c,n,rk,st,chk,note||`${k.name} class`));
   if(k.atk){const [n,st,dice,ds,fx]=k.atk;if(!c.attacks.some(a=>a.name===n)){const i=c.attacks.findIndex(a=>!a.name);if(i>=0)c.attacks[i]={name:n,rank:String(c.skills.find(s=>s.name===n)?.rank||3),stat:st,dice,dmgStat:ds,effects:fx,hitTxt:""}}}
   (k.inv||[]).forEach(t=>{const i=c.inv.findIndex(x=>!x.item);if(i>=0)c.inv[i]={item:t,qty:"1",notes:`${k.name} starting gear`}});
-  c.cls=k.name;c.clsId=k.id;(k.ab||[]).forEach(t=>addLine(c.classAb,t))}
+  c.cls=k.name;c.clsId=k.id;(k.ab||[]).forEach(t=>addLine(c.classAb,t));if(k.summon)setSummon(c,k)}
+/* Summons use the Mob Forge stat budget at the crawler's level, with the Summon's build. */
+function summonStats(def,L){const m={kind:"Mob",level:Math.max(1,+L||1),floor:1,stats:{}};spread(m,def.role||"even");return m.stats}
+function setSummon(c,k){const d=k.summon,L=Math.max(1,num(c.level)||1),st=summonStats(d,L),mods=Object.fromEntries(STATS.map(s=>[s,statMod(st[s])])),keep=c.pet&&c.pet.summon===k.id&&c.pet.name?c.pet.name:d.name;
+  const atxt=a=>`${a.name}: ${a.area?"no attack roll, ":"d20 + your INT + Summoning to hit, "}${/^Fd/i.test(a.dice)?`1${a.dice.slice(1)} per Floor`:a.dice}${a.fx&&/INT mod to damage/.test(a.fx)?" + your INT":""} ${a.type}, ${a.range}${a.area?" (area)":""}${a.fx&&!/INT mod to damage/.test(a.fx)?". "+a.fx:""}`;
+  c.pet={...c.pet,name:keep,level:String(L),...Object.fromEntries(STATS.map(s=>[s,String(st[s])])),dr:String(d.dr||0),evade:`d20+${mods.DEX}`,move:d.move||"",size:String(d.size||4),
+    atk1:d.atks[0]?atxt(d.atks[0]):"",atk2:d.atks[1]?atxt(d.atks[1]):"",special:d.special||"",
+    summon:k.id,atks:d.atks,type:d.type||"",res:d.res||"",vuln:d.vuln||""}}
+function summonBar(c){const k=c.pet&&c.pet.summon&&RC_CLASSES.find(x=>x.id===c.pet.summon);if(!k||!k.summon)return "";const L=Math.max(1,num(c.level)||1);
+  return `<div class="row" style="gap:8px;align-items:center;margin:6px 0"><span class="dim" style="font-size:12px">${esc(k.summon.name)} from ${esc(k.name)}${String(c.pet.level)!==String(L)?` · built for Level ${esc(c.pet.level)}`:""}</span>${String(c.pet.level)!==String(L)?`<button class="btn sm gold" data-act="petRescale">Grow it to Level ${L}</button>`:""}</div>`}
 function vRaceClass(){const R=S.rc,c=S.sheets[R.id];if(!c){S.rc=null;return vSheets(F())}const cur=R.step,{race,cls}=rcResolve(c,R);
   const pv=rcPreview(c,R),kp=sheetCalc(pv),ptsLeft=pv.statPts||0;
   const done={race:!!R.race,cls:!!R.cls,stats:ptsLeft===0,review:false};
@@ -2519,7 +2533,7 @@ function vRaceClass(){const R=S.rc,c=S.sheets[R.id];if(!c){S.rc=null;return vShe
       ${isAnimal(c)&&race.id!=="uplifted"&&!race.custom?`<p class="tip">Picking a humanoid race gives ${esc(c.name)} hands. Weapon classes open up.</p>`:""}`
      :`<h3 class="wzh">Choose your race</h3><p>Welcome to the Third Floor. The System lets you become something new, or stay what you are. Every race has a cost.</p>`}
   if(cur==="cls"){left=`<div class="wzlist">${RC_CLASSES.map((x,i)=>{const bl=rcBlock(c,x,"cls",race);if(x.who==="animal"&&!isAnimal(c))return "";return wzOpt(x.name,bl||Object.entries(x.stats||{}).map(([s,n])=>`${s}+${n}`).join(" ")||"Your own","rcPick",`data-k="cls" data-v="${x.id}" ${bl?"disabled":""}`,R.cls===x.id,(i*29+265)%360)}).join("")}</div>`;
-    center=cls?`<h3 class="wzh">${esc(cls.name)}</h3><p>${esc(cls.blurb)}</p>${pills(cls)}${cls.custom?customForm("cls"):`<div class="eyebrow" style="margin-top:10px">Class abilities</div><ul class="featl">${cls.ab.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>${cls.inv?`<div class="wzpills"><span>Gear: ${esc(cls.inv.join(", "))}</span></div>`:""}`}`
+    center=cls?`<h3 class="wzh">${esc(cls.name)}</h3><p>${esc(cls.blurb)}</p>${pills(cls)}${cls.custom?customForm("cls"):`<div class="eyebrow" style="margin-top:10px">Class abilities</div><ul class="featl">${cls.ab.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>${cls.summon?`<div class="wzpills"><span>Summon: ${esc(cls.summon.name)} (${esc(cls.summon.type)}). It becomes your Pet, scaled to your level.</span></div>`:""}${cls.src?`<p class="dim" style="font-size:12px;margin-top:6px">${esc(cls.src)}</p>`:""}${cls.inv?`<div class="wzpills"><span>Gear: ${esc(cls.inv.join(", "))}</span></div>`:""}`}`
      :`<h3 class="wzh">Choose your class</h3><p>Your class decides how you'll kill things from here down. Greyed-out classes say what they need.</p>`}
   if(cur==="stats"){center=`<h3 class="wzh">Stat Points</h3><p>${ptsLeft+STATS.reduce((t,s)=>t+(R.alloc[s]||0),0)} to spend${(c.statPts||0)?` (${c.statPts} from levels, house rule)`:""}${race?.pts?`, +${race.pts} from being Human`:""}. Each point raises a Stat by 1. <b>${ptsLeft}</b> left.</p>${allocGrid(rcPreview(c,{...R,alloc:{}}),R.alloc,"rcAlloc",ptsLeft)}
     ${houseBox()}`;left=wzOpt("Race",race?race.name:"Not picked","rcStep",`data-k="race"`,!!race,45)+wzOpt("Class",cls?cls.name:"Not picked","rcStep",`data-k="cls"`,!!cls,265)}
@@ -2709,7 +2723,7 @@ async function livePlayerBoot(){const url=new URL(location.href);const room=(url
   if(lsGet("dcc.room","")!==room){lsSet("dcc.room",room)}lsSet("dcc.mychars",[...mine]);
   S.live={role:"player",room,uid:u.uid,online:false,mine,watch:{},seen:Math.max(lsGet("dcc.seen",0),Date.now()-120000),pendingSay:null};liveWatchConn();
   if(qc){S.sheetSel=qc}
-  mine.forEach(liveWatchChar);liveWatchEvents();liveWatchMood();renderMain()}
+  mine.forEach(liveWatchChar);liveWatchEvents();liveWatchMood();liveWatchClasses();renderMain()}
 function liveWatchChar(id){if(!S.live||S.live.watch[id])return;const {D,db}=S.fb;
   S.live.watch[id]=D.onValue(D.ref(db,livePath(`chars/${id}`)),snap=>{const v=snap.val();if(!v||!v.sheet)return;
     if(!v.ownerUid)D.update(D.ref(db,livePath(`chars/${id}`)),{ownerUid:S.live.uid}).catch(()=>{});
@@ -2955,9 +2969,15 @@ function r20Sheet(c){const k=sheetCalc(c),g=k.gb,crawler=c.kind!=="creature",lin
     skills:c.skills.filter(s=>s.name).map(s=>({name:s.name,rank:num(s.rank),stat:s.stat||"DEX"})),
     gear:{...c.gear},inventory:c.inv.filter(i=>i.item).map(i=>`${i.item}${i.qty?` ×${i.qty}`:""}${i.notes?` (${i.notes})`:""}`).join("\n"),
     abilities:[lines(c.racial),lines(c.classAb)].filter(Boolean).join("\n"),notes:c.notes||""}}
+function r20Pet(c){const t=c.pet;if(!t||!String(t.name||"").trim()||c.kind==="creature")return null;const st=Object.fromEntries(STATS.map(s=>[s,num(t[s])]));if(!STATS.some(s=>st[s]))return null;
+  const fl=num(c.floor)||F()?.number||1,dice=x=>String(x||"").replace(/^Fd/i,fl+"d");
+  return {kind:"monster",role:"even",name:`${t.name} (${c.name||"crawler"}'s)`,mobKind:"Mob",tier:"",level:num(t.level)||num(c.level)||1,floor:fl,size:num(t.size)||4,type:t.type||"Pet",move:t.move||"20+S",stats:st,
+    hbMax:10,hb:10-(t.hbLost||[]).filter(Boolean).length,armor:num(t.dr),resist:t.res||"",vuln:t.vuln||"",immune:"",
+    attacks:(t.atks||[]).map(a=>({name:a.name,stat:"INT",rank:0,dice:dice(a.dice),dmgStat:/INT mod to damage/.test(a.fx||"")?"INT":"none",type:a.type||"",range:a.range||"",area:!!a.area,effect:/INT mod to damage/.test(a.fx||"")?"":a.fx||""})),
+    traits:[t.special,t.atk1,t.atk2].filter(Boolean).join("\n\n"),notes:`${c.name||"A crawler"}'s ${t.summon?"Summon":"Pet"}. Uses the summoner's INT for attacks.`}}
 function roll20Export(scope){const all=Object.values(S.floors).sort((a,b)=>a.number-b.number),floors=scope==="floor"&&F()?[F()]:all;
   const chars=[],seen={};const add=rc=>{const k=rc.name.toLowerCase();if(seen[k]&&rc.kind==="monster")rc.name+=` (F${rc.floor})`;seen[rc.name.toLowerCase()]=1;chars.push(rc)};
-  if(scope!=="mobs")Object.values(S.sheets).forEach(c=>add(r20Sheet(c)));
+  if(scope!=="mobs")Object.values(S.sheets).forEach(c=>{add(r20Sheet(c));const pt=r20Pet(c);if(pt)add(pt)});
   if(scope!=="sheets")floors.forEach(f=>(f.mobs||[]).forEach(m=>add(r20Mob(m,f))));
   return {kind:"dcc-roll20",v:1,exportedAt:new Date().toISOString(),floor:F()?.number||1,chars,floors:scope==="sheets"||scope==="mobs"?[]:floors.map(f=>({number:f.number,name:f.name,theme:f.theme,collapseDays:f.collapseDays,features:f.features,janitor:f.janitor,threads:f.threads,notes:f.notes,
     neighborhoods:(f.neighborhoods||[]).map(n=>({name:n.name,summary:n.summary,theme:n.theme,environment:n.environment,boss:n.boss,bossNotes:n.bossNotes,traps:(n.traps||[]).filter(t=>t&&t.name),npcs:(n.npcs||[]).map(x=>typeof x==="string"?x:{name:x?.name||""})})),
@@ -3061,7 +3081,12 @@ const PACK_EMBED=/*PACK*/null/*/PACK*/;
 function applyPack(p){if(!p||p.kind!=="floor-builder-pack")return 0;UPLOADS.length=0;(p.monsters||[]).forEach(m=>UPLOADS.push(m));Object.assign(UPLOAD_IMGS,p.images||{});setTimeout(backfillArt,0);
   let si=ITEMS.src.indexOf("Your uploads (converted)");if(si<0){ITEMS.src.push("Your uploads (converted)");si=ITEMS.src.length-1}
   ITEMS.items=ITEMS.items.filter(x=>x.src!==si);(p.items||[]).forEach(x=>ITEMS.items.push({n:x.n,s:x.s,b:x.b,src:si,p:0,fx:x.fx+(x.from?` (From the ${x.from}.)`:"")}));
-  S.packLoaded=true;return UPLOADS.length}
+  mergeClasses(p.classes||[]);S.packLoaded=true;return UPLOADS.length}
+/* Extra crawler classes that come with a pack (e.g. Tome of Summoning). Shared with players' phones through the room. */
+function mergeClasses(list){if(!Array.isArray(list))return;for(let i=RC_CLASSES.length-1;i>=0;i--)if(RC_CLASSES[i].pack)RC_CLASSES.splice(i,1);
+  const at=RC_CLASSES.findIndex(x=>x.id==="custom");list.filter(x=>x&&x.id&&x.name).forEach((x,j)=>RC_CLASSES.splice(at<0?RC_CLASSES.length:at+j,0,{...x,ab:x.ab||[],pack:true}))}
+function livePublishClasses(p){if(S.live?.role!=="gm"||!S.fb||!p)return;const {D,db}=S.fb;D.set(D.ref(db,livePath("meta/classes")),p.classes&&p.classes.length?fbClean(p.classes):null).catch(()=>{})}
+function liveWatchClasses(){if(!S.fb||!S.live||S.live.role==="gm")return;const {D,db}=S.fb;D.onValue(D.ref(db,livePath("meta/classes")),snap=>{const v=snap.val();mergeClasses(Array.isArray(v)?v:v?Object.values(v):[]);if(S.rc&&!editing())renderMain()},()=>{})}
 if(PACK_EMBED)applyPack(PACK_EMBED);
 const upArt=L=>L&&L.imgKey?UPLOAD_IMGS[L.imgKey]||"":"";
 function backfillArt(){if(S.player||!UPLOADS.length)return;const by={};UPLOADS.forEach(L=>{if(L.imgKey&&UPLOAD_IMGS[L.imgKey])by[L.name.toLowerCase()]=UPLOAD_IMGS[L.imgKey]});let n=0;
@@ -3070,13 +3095,13 @@ function backfillArt(){if(S.player||!UPLOADS.length)return;const by={};UPLOADS.f
   if(n){toast(`Added art to ${n} monster${n>1?"s":""} already on your floors`);if(S.tab==="mobs"||S.tab==="sheets")renderMain()}}
 async function loadPackFile(file){let p;try{p=JSON.parse(await file.text())}catch(_){toast("That file isn't a monster pack");return}
   const n=applyPack(p);if(!n){toast("That file isn't a monster pack");return}
-  if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;try{await D.set(D.ref(db,livePath("gm/pack")),fbClean(p));toast(`${n} monsters loaded and saved to your room`)}catch(_){toast(`${n} monsters loaded on this device only`)}}
+  if(S.live?.role==="gm"&&S.fb){const {D,db}=S.fb;try{await D.set(D.ref(db,livePath("gm/pack")),fbClean(p));livePublishClasses(p);toast(`${n} monsters${(p.classes||[]).length?` and ${p.classes.length} classes`:""} loaded and saved to your room`)}catch(_){toast(`${n} monsters loaded on this device only`)}}
   else toast(`${n} monsters loaded`);S.libSet="uploads";renderMain()}
 function liveWatchRolls(){if(!S.fb||S.live?.role!=="gm")return;const {D,db}=S.fb,since=Date.now(),seen={};
   const on=snap=>{const r=snap.val()?.roll;if(!r||!(r.ts>since)||r.ts<=(seen[snap.key]||0))return;seen[snap.key]=r.ts;const {ts,...ev}=r;bridge({...ev,type:"roll",player:true});
     toast(`🎲 ${r.who||"A player"}: ${r.label} = ${r.total}${r.nat===20?" (Natural 20!)":r.nat===1?" (Natural 1)":""}`)};
   D.onChildChanged(D.ref(db,livePath("chars")),on,()=>{});D.onChildAdded(D.ref(db,livePath("chars")),on,()=>{})}
-async function liveLoadPack(){if(!S.fb||S.live?.role!=="gm"||PACK_EMBED)return;const {D,db}=S.fb;try{const v=(await D.get(D.ref(db,livePath("gm/pack")))).val();if(v){applyPack(v);if(S.tab==="mobs"||S.tab==="loot")renderMain()}}catch(_){}}
+async function liveLoadPack(){if(!S.fb||S.live?.role!=="gm"||PACK_EMBED)return;const {D,db}=S.fb;try{const v=(await D.get(D.ref(db,livePath("gm/pack")))).val();if(v){applyPack(v);livePublishClasses(v);if(S.tab==="mobs"||S.tab==="loot")renderMain()}}catch(_){}}
 function libFilter(lib,set){const q=(S.libQ||"").trim().toLowerCase(),k=S.libKind||"",fam=S.libFam||"",fit=S.libFit||"",cf=+F()?.number||1;
   const out=lib.items.map((L,i)=>[L,i]).filter(([L])=>(!q||(L.name+" "+L.origin+" "+L.type+" "+(L.concept||"")).toLowerCase().includes(q))&&(!k||(k==="Mob"?L.kind==="Mob":L.kind!=="Mob"))&&(!fam||L.origin===fam)&&(!fit||fit==="sort"||Math.abs(monRec(L).floor-cf)<=1));
   if(fit)out.sort((a,b)=>monRec(a[0]).floor-monRec(b[0]).floor||a[0].name.localeCompare(b[0].name));return out}
